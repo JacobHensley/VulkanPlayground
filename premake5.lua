@@ -1,3 +1,5 @@
+VK_SDK_PATH = os.getenv("VK_SDK_PATH")
+
 workspace "VulkanPlayground"
 	architecture "x64"
 	startproject "VulkanPlayground"
@@ -11,6 +13,7 @@ workspace "VulkanPlayground"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
+IncludeDir["Vulkan"] = VK_SDK_PATH .. "/include"
 IncludeDir["GLFW"]   = "VulkanPlayground/vendor/GLFW/include"
 IncludeDir["glm"]    = "VulkanPlayground/vendor/glm"
 IncludeDir["spdlog"] = "VulkanPlayground/vendor/spdlog/include"
@@ -26,6 +29,9 @@ project "VulkanPlayground"
 	targetdir ("bin/" .. outputdir .. "/%{prj.name}")
 	objdir ("bin/intermediates/" .. outputdir .. "/%{prj.name}")	
 
+	pchheader "pch.h"
+	pchsource "VulkanPlayground/src/pch.cpp"
+
 	files
 	{
 		"%{prj.name}/src/**.h",
@@ -36,9 +42,15 @@ project "VulkanPlayground"
 	{
 		"%{prj.name}/src",
 		"%{prj.name}/vendor",
+		"%{IncludeDir.Vulkan}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
+	}
+
+	links 
+	{ 
+		VK_SDK_PATH .. "/Lib/vulkan-1.lib"
 	}
 
 	filter "system:windows"
@@ -48,6 +60,11 @@ project "VulkanPlayground"
 	filter "configurations:Debug"
 		runtime "Debug"
 		symbols "On"
+
+	defines 
+	{
+		"ENABLE_ASSERTS"
+	}
 
 	filter "configurations:Release"
 		runtime "Release"
