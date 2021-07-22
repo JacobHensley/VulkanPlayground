@@ -50,6 +50,7 @@ project "VulkanPlayground"
 
 	links 
 	{ 
+		'GLFW',
 		VK_SDK_PATH .. "/Lib/vulkan-1.lib"
 	}
 
