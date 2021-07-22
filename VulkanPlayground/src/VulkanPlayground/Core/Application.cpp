@@ -12,15 +12,22 @@ namespace VKPlayground {
 		LOG_INFO("Initialized Application");
 	}
 
+	Application::~Application()
+	{
+		m_Window.reset();
+		m_VulkanInstance.reset();
+	}
+
 	void Application::Init()
 	{
 		ASSERT(!s_Instance, "Instance of Application already exists");
 		s_Instance = this;
 
 		Log::Init();
-
+		
 		m_Window = CreateRef<Window>(m_Name, 1280, 720);
 		m_VulkanInstance = CreateRef<VulkanInstance>(m_Name);
+		m_Window->InitVulkanSurface();
 	}
 
 	void Application::Run()

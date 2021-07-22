@@ -18,8 +18,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSev
     return VK_FALSE;
 }
 
-namespace Utils
-{
+namespace Utils {
+
     static bool CheckValidationSupport()
     {
         // Get layer info
@@ -172,8 +172,8 @@ namespace VKPlayground {
 
         InitDebugCallback();
 
-        Utils::PrintAvailableExtensions();
-        Utils::PrintAvailableLayers();
+    //    Utils::PrintAvailableExtensions();
+    //    Utils::PrintAvailableLayers();
     }
 
     void VulkanInstance::InitDebugCallback()

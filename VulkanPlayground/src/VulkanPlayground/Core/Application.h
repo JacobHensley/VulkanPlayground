@@ -8,6 +8,7 @@ namespace VKPlayground {
 	{
 	public:
 		Application(const std::string name);
+		~Application();
 
 	public:
 		void Run();

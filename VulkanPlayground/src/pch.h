@@ -7,6 +7,7 @@
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <cstdint>
 
 #include <string>
 #include <sstream>
@@ -18,6 +19,7 @@
 #include <initializer_list>
 #include <queue>
 #include <optional>
+#include <set>
 
 #include "VulkanPlayground/Core/Core.h"
 #include "VulkanPlayground/Core/Log.h"
