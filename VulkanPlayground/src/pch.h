@@ -17,6 +17,7 @@
 #include <unordered_set>
 #include <initializer_list>
 #include <queue>
+#include <optional>
 
 #include "VulkanPlayground/Core/Core.h"
 #include "VulkanPlayground/Core/Log.h"

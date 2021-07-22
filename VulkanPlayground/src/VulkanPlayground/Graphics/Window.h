@@ -1,23 +1,27 @@
 #pragma once
 #include "GLFW/glfw3.h"
 
-class Window
-{
-public:
-	Window(const std::string& name, int width, int height);
-	~Window();
+namespace VKPlayground {
 
-public:
-	void Update();
-	bool IsClosed();
+	class Window
+	{
+	public:
+		Window(const std::string& name, int width, int height);
+		~Window();
 
-private:
-	void Init();
+	public:
+		void Update();
+		bool IsClosed();
 
-private:
-	const std::string m_Name;
-	int m_Width;
-	int m_Height;
+	private:
+		void Init();
 
-	GLFWwindow* m_WindowHandle;
-};
+	private:
+		const std::string m_Name;
+		int m_Width;
+		int m_Height;
+
+		GLFWwindow* m_WindowHandle;
+	};
+
+}

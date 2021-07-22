@@ -1,18 +1,16 @@
 #include "pch.h"
-#include "Graphics/Window.h"
-#include "Graphics/API/VulkanInstance.h"
+#include "Core/Application.h"
+#include "Graphics/API/VulkanDevice.h"
+
+using namespace VKPlayground;
 
 int main()
 {
-	Log::Init();
+	Application application = Application("Vulkan Playground");
 
-	Window window = Window("Vulkan Playground", 1280, 720);
-	VulkanInstance instance = VulkanInstance();
+	VulkanDevice device = VulkanDevice();
 
-	while (!window.IsClosed())
-	{
-		window.Update();
-	}
+	application.Run();
 
 	return 0;
 }

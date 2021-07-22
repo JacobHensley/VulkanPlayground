@@ -109,80 +109,85 @@ namespace Utils
     }
 }
 
-VulkanInstance::VulkanInstance()
-{
-	Init();
-    LOG_INFO("Initialized Vulkan instance");
-}
+namespace VKPlayground {
 
-VulkanInstance::~VulkanInstance()
-{
-    if (m_DebugUtilsMessenger != VK_NULL_HANDLE)
+    VulkanInstance::VulkanInstance(const std::string& name)
+        : m_Name(name)
     {
-        m_DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugUtilsMessenger, nullptr);
+	    Init();
+        LOG_INFO("Initialized Vulkan instance");
     }
 
-    vkDestroyInstance(m_Instance, nullptr);
-}
-
-void VulkanInstance::Init()
-{
-    ASSERT(!(s_EnableValidationLayers && !Utils::CheckValidationSupport()), "Requested validation layers not available");
-
-    // Application
-    VkApplicationInfo appInfo{};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Vulkan Playground";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
-
-    std::vector<const char*> requiredExtensions = Utils::GetRequiredExtensions();
-
-    // Instance
-    VkInstanceCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
-    createInfo.ppEnabledExtensionNames = requiredExtensions.data();
-
-    if (s_EnableValidationLayers)
+    VulkanInstance::~VulkanInstance()
     {
-        // Set layers to use validation layers
-        createInfo.enabledLayerCount = static_cast<uint32_t>(s_ValidationLayers.size());
-        createInfo.ppEnabledLayerNames = s_ValidationLayers.data();
+        if (m_DebugUtilsMessenger != VK_NULL_HANDLE)
+        {
+            m_DestroyDebugUtilsMessengerEXT(m_Instance, m_DebugUtilsMessenger, nullptr);
+        }
 
-        // Create debug callback info for instaance creation
-        VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-        Utils::PopulateDebugMessengerCreateInfo(debugCreateInfo);
-        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
-    }
-    else
-    {
-        createInfo.enabledLayerCount = 0;
+        vkDestroyInstance(m_Instance, nullptr);
     }
 
-    // Create instance
-    VkResult result = vkCreateInstance(&createInfo, nullptr, &m_Instance);
-    ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan instance");
+    void VulkanInstance::Init()
+    {
+        ASSERT(!(s_EnableValidationLayers && !Utils::CheckValidationSupport()), "Requested validation layers not available");
 
-    InitDebugCallback();
+        // Application
+        VkApplicationInfo appInfo{};
+        appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
+        appInfo.pApplicationName = m_Name.c_str();
+        appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.pEngineName = "No Engine";
+        appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
+        appInfo.apiVersion = VK_API_VERSION_1_0;
 
-    Utils::PrintAvailableExtensions();
-    Utils::PrintAvailableLayers();
-}
+        std::vector<const char*> requiredExtensions = Utils::GetRequiredExtensions();
 
-void VulkanInstance::InitDebugCallback()
-{
-    // Load debug utils extension functions
-    m_CreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT"));
-    m_DestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT"));
+        // Instance
+        VkInstanceCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+        createInfo.pApplicationInfo = &appInfo;
+        createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+        createInfo.ppEnabledExtensionNames = requiredExtensions.data();
 
-    // Create debug callback and set it to m_DebugUtilsMessenger
-    VkDebugUtilsMessengerCreateInfoEXT createInfo;
-    Utils::PopulateDebugMessengerCreateInfo(createInfo);
-    VkResult result = m_CreateDebugUtilsMessengerEXT(m_Instance, &createInfo, nullptr, &m_DebugUtilsMessenger);
+        if (s_EnableValidationLayers)
+        {
+            // Set layers to use validation layers
+            createInfo.enabledLayerCount = static_cast<uint32_t>(s_ValidationLayers.size());
+            createInfo.ppEnabledLayerNames = s_ValidationLayers.data();
 
-    ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan debug callback");
+            // Create debug callback info for instaance creation
+            VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+            Utils::PopulateDebugMessengerCreateInfo(debugCreateInfo);
+            createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+        }
+        else
+        {
+            createInfo.enabledLayerCount = 0;
+        }
+
+        // Create instance
+        VkResult result = vkCreateInstance(&createInfo, nullptr, &m_Instance);
+        ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan instance");
+
+        InitDebugCallback();
+
+        Utils::PrintAvailableExtensions();
+        Utils::PrintAvailableLayers();
+    }
+
+    void VulkanInstance::InitDebugCallback()
+    {
+        // Load debug utils extension functions
+        m_CreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT"));
+        m_DestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkDestroyDebugUtilsMessengerEXT"));
+
+        // Create debug callback and set it to m_DebugUtilsMessenger
+        VkDebugUtilsMessengerCreateInfoEXT createInfo;
+        Utils::PopulateDebugMessengerCreateInfo(createInfo);
+        VkResult result = m_CreateDebugUtilsMessengerEXT(m_Instance, &createInfo, nullptr, &m_DebugUtilsMessenger);
+
+        ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan debug callback");
+    }
+
 }

@@ -1,20 +1,28 @@
 #pragma once
 #include "vulkan/vulkan.h"
 
-class VulkanInstance
-{
-public:
-	VulkanInstance();
-	~VulkanInstance();
+namespace VKPlayground {
 
-private:
-	void Init();
-	void InitDebugCallback();
+	class VulkanInstance
+	{
+	public:
+		VulkanInstance(const std::string& name);
+		~VulkanInstance();
 
-private:
-	VkInstance m_Instance;
+	public:
+		inline VkInstance GetInstanceHandle() { return m_Instance; }
 
-	PFN_vkCreateDebugUtilsMessengerEXT m_CreateDebugUtilsMessengerEXT;
-	PFN_vkDestroyDebugUtilsMessengerEXT m_DestroyDebugUtilsMessengerEXT;
-	VkDebugUtilsMessengerEXT m_DebugUtilsMessenger;
-};
+	private:
+		void Init();
+		void InitDebugCallback();
+
+	private:
+		VkInstance m_Instance;
+		std::string m_Name;
+
+		PFN_vkCreateDebugUtilsMessengerEXT m_CreateDebugUtilsMessengerEXT;
+		PFN_vkDestroyDebugUtilsMessengerEXT m_DestroyDebugUtilsMessengerEXT;
+		VkDebugUtilsMessengerEXT m_DebugUtilsMessenger;
+	};
+
+}
