@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "Core/Application.h"
-#include "Graphics/API/VulkanDevice.h"
-#include "Graphics/API/VulkanSwapChain.h"
+#include "VulkanPlayground/Graphics/Shader.h"
 
 using namespace VKPlayground;
 
@@ -9,8 +8,7 @@ int main()
 {
 	Application application = Application("Vulkan Playground");
 
-	VulkanDevice device;
-	VulkanSwapChain swapChain(device);
+	Shader shader("assets/shaders/test.shader");
 
 	application.Run();
 

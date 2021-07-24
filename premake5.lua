@@ -51,7 +51,8 @@ project "VulkanPlayground"
 	links 
 	{ 
 		'GLFW',
-		VK_SDK_PATH .. "/Lib/vulkan-1.lib"
+		VK_SDK_PATH .. "/Lib/vulkan-1.lib",
+		VK_SDK_PATH .. "/Lib/shaderc_shared.lib"
 	}
 
 	filter "system:windows"

@@ -1,12 +1,11 @@
 #include "pch.h"
 #include "VulkanSwapChain.h"
 #include "VulkanPlayground/Core/Application.h"
-#include "glm/glm.hpp"
+#include <glm/glm.hpp>
 
 namespace VKPlayground {
 
-	VulkanSwapChain::VulkanSwapChain(VulkanDevice& device)
-		: m_Device(device)
+	VulkanSwapChain::VulkanSwapChain()
 	{
 		Init();
 		LOG_INFO("Initialized Vulkan swap chain");
@@ -14,17 +13,20 @@ namespace VKPlayground {
 
 	VulkanSwapChain::~VulkanSwapChain()
 	{
-		vkDestroySwapchainKHR(m_Device.GetLogicalDevice(), m_SwapChain, nullptr);
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+
+		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
 
 		for (auto imageView : m_SwapChainImageViews)
 		{
-			vkDestroyImageView(m_Device.GetLogicalDevice(), imageView, nullptr);
+			vkDestroyImageView(device->GetLogicalDevice(), imageView, nullptr);
 		}
 	}
 
 	void VulkanSwapChain::Init()
 	{
-		SwapChainSupportDetails supportDetails = m_Device.GetSwapChainSupportDetails();
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+		SwapChainSupportDetails supportDetails = device->GetSwapChainSupportDetails();
 
 		// Select format
 		std::vector<VkSurfaceFormatKHR> formats = supportDetails.Formats;
@@ -96,7 +98,7 @@ namespace VKPlayground {
 		createInfo.oldSwapchain = VK_NULL_HANDLE;
 
 		// Select exclusive vs concurrent mode
-		QueueFamilyIndices indices = m_Device.GetQueueIndices();
+		QueueFamilyIndices indices = device->GetQueueIndices();
 		uint32_t queueFamilyIndices[] = { indices.GraphicsQueue.value(), indices.PresentQueue.value() };
 		if (indices.GraphicsQueue != indices.PresentQueue)
 		{
@@ -112,13 +114,13 @@ namespace VKPlayground {
 		}
 
 		// Create swap chain
-		VkResult result = vkCreateSwapchainKHR(m_Device.GetLogicalDevice(), &createInfo, nullptr, &m_SwapChain);
+		VkResult result = vkCreateSwapchainKHR(device->GetLogicalDevice(), &createInfo, nullptr, &m_SwapChain);
 		ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan swap chain");
 
 		// Get swap chain image handles
-		vkGetSwapchainImagesKHR(m_Device.GetLogicalDevice(), m_SwapChain, &imageCount, nullptr);
+		vkGetSwapchainImagesKHR(device->GetLogicalDevice(), m_SwapChain, &imageCount, nullptr);
 		m_SwapChainImages.resize(imageCount);
-		vkGetSwapchainImagesKHR(m_Device.GetLogicalDevice(), m_SwapChain, &imageCount, m_SwapChainImages.data());
+		vkGetSwapchainImagesKHR(device->GetLogicalDevice(), m_SwapChain, &imageCount, m_SwapChainImages.data());
 
 		// Store swap chain settings
 		m_SwapChainImageFormat = selectedFormat.format;
@@ -146,7 +148,7 @@ namespace VKPlayground {
 			createInfo.subresourceRange.baseArrayLayer = 0;
 			createInfo.subresourceRange.layerCount = 1;
 			
-			VkResult result = vkCreateImageView(m_Device.GetLogicalDevice(), &createInfo, nullptr, &m_SwapChainImageViews[i]);
+			VkResult result = vkCreateImageView(device->GetLogicalDevice(), &createInfo, nullptr, &m_SwapChainImageViews[i]);
 			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan image view");
 		}
 	}
