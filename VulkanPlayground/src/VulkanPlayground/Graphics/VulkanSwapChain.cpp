@@ -15,12 +15,14 @@ namespace VKPlayground {
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
 
-		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
+		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
 
 		for (auto imageView : m_SwapChainImageViews)
 		{
 			vkDestroyImageView(device->GetLogicalDevice(), imageView, nullptr);
 		}
+
+		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
 	}
 
 	void VulkanSwapChain::Init()
@@ -120,6 +122,7 @@ namespace VKPlayground {
 		// Get swap chain image handles
 		vkGetSwapchainImagesKHR(device->GetLogicalDevice(), m_SwapChain, &imageCount, nullptr);
 		m_SwapChainImages.resize(imageCount);
+
 		vkGetSwapchainImagesKHR(device->GetLogicalDevice(), m_SwapChain, &imageCount, m_SwapChainImages.data());
 
 		// Store swap chain settings
@@ -151,6 +154,41 @@ namespace VKPlayground {
 			VkResult result = vkCreateImageView(device->GetLogicalDevice(), &createInfo, nullptr, &m_SwapChainImageViews[i]);
 			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan image view");
 		}
+
+		// Create render pass and sub pass
+
+		// Color attachment
+		VkAttachmentDescription colorAttachment{};
+		colorAttachment.format = m_SwapChainImageFormat;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		// Reference to color attachment
+		VkAttachmentReference colorAttachmentRef{};
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+		// Create subpass using color attachment reference
+		VkSubpassDescription subpass{};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
+
+		// Create render pass
+		VkRenderPassCreateInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = 1;
+		renderPassInfo.pAttachments = &colorAttachment;
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+
+		result = vkCreateRenderPass(device->GetLogicalDevice(), &renderPassInfo, nullptr, &m_RenderPass);
+		ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan render pass");
 	}
 
 }

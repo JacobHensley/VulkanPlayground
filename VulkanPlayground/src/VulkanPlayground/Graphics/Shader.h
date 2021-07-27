@@ -12,6 +12,10 @@ namespace VKPlayground {
 	{
 	public:
 		Shader(const std::string& path);
+		~Shader();
+
+	public:
+		inline const std::vector<VkPipelineShaderStageCreateInfo>& GetShaderCreateInfo() { return m_ShaderCreateInfo; };
 
 	private:
 		void Init();
@@ -21,7 +25,7 @@ namespace VKPlayground {
 	private:
 		const std::string m_Path;
 		std::unordered_map<ShaderStage, std::string> m_ShaderSrc;
-		std::unordered_map<ShaderStage, VkPipelineShaderStageCreateInfo> m_ShaderCreateInfo;
+		std::vector<VkPipelineShaderStageCreateInfo> m_ShaderCreateInfo;
 	};
 
 }

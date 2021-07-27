@@ -18,6 +18,7 @@ namespace VKPlayground {
 		inline Ref<Window> GetWindow() { return m_Window; }
 		inline Ref<VulkanInstance> GetVulkanInstance() { return m_VulkanInstance; }
 		inline Ref<VulkanDevice> GetVulkanDevice() { return m_Device; }
+		inline Ref<VulkanSwapChain> GetVulkanSwapChain() { return m_SwapChain; }
 
 		inline static Application& GetApp() { return *s_Instance; }
 

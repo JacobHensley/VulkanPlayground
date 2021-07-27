@@ -13,7 +13,7 @@ namespace VKPlayground {
 	VulkanDevice::VulkanDevice()
 	{
 		Init();
-		LOG_INFO("Initialized device");
+		LOG_INFO("Initialized Vulkan device");
 	}
 
 	VulkanDevice::~VulkanDevice()

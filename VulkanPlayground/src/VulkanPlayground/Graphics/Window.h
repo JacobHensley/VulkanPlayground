@@ -16,7 +16,9 @@ namespace VKPlayground {
 
 	public:
 		void Update();
+
 		void InitVulkanSurface();
+
 		glm::vec2 GetFramebufferSize();
 		bool IsClosed();
 

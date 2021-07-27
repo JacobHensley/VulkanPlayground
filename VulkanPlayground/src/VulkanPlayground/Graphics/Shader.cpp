@@ -39,7 +39,16 @@ namespace VKPlayground {
 		: m_Path(path)
 	{
 		Init();
-		LOG_INFO("Initialized shader: {0}", m_Path);
+		LOG_INFO("Initialized Vulkan shader: {0}", m_Path);
+	}
+
+	Shader::~Shader()
+	{
+		VkDevice logicalDevice = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
+		for (auto shaderStageInfo : m_ShaderCreateInfo)
+		{
+			vkDestroyShaderModule(logicalDevice, shaderStageInfo.module, nullptr);
+		}
 	}
 
 	void Shader::Init()
@@ -48,7 +57,7 @@ namespace VKPlayground {
 		ASSERT(m_ShaderSrc.size() >= 1, "Shader is empty or path is invalid");
 
 		bool result = CompileShaders(m_ShaderSrc);
-		ASSERT(result, "Failed to initialize shader: {0}", m_Path)
+		ASSERT(result, "Failed to initialize shader")
 	}
 
 	bool Shader::CompileShaders(const std::unordered_map<ShaderStage, std::string>& shaderSrc)
@@ -85,17 +94,14 @@ namespace VKPlayground {
 			ASSERT(result == VK_SUCCESS, "Failed to initialize shader module");
 
 			// Create shader stage
-			VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-			vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			vertShaderStageInfo.stage = Utils::ShaderStageToVulkan(stage);;
-			vertShaderStageInfo.module = shaderModule;
-			vertShaderStageInfo.pName = "main";
+			VkPipelineShaderStageCreateInfo shaderStageInfo{};
+			shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			shaderStageInfo.stage = Utils::ShaderStageToVulkan(stage);;
+			shaderStageInfo.module = shaderModule;
+			shaderStageInfo.pName = "main";
 
 			// Save shader stage info
-			m_ShaderCreateInfo[stage] = vertShaderStageInfo;
-
-			// destroy shader module
-			vkDestroyShaderModule(logicalDevice, shaderModule, nullptr);
+			m_ShaderCreateInfo.push_back(shaderStageInfo);
 		}
 	}
 
