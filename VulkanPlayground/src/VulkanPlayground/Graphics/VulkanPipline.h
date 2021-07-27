@@ -10,6 +10,9 @@ namespace VKPlayground {
 		VulkanPipline(Ref<Shader> shader);
 		~VulkanPipline();
 
+	public:
+		inline VkPipeline GetPipeline() { return m_Pipeline; }
+
 	private:
 		void Init();
 

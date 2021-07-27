@@ -15,6 +15,11 @@ namespace VKPlayground {
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
 
+		for (auto framebuffer : m_SwapChainFramebuffers)
+		{
+			vkDestroyFramebuffer(device->GetLogicalDevice(), framebuffer, nullptr);
+		}
+
 		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
 
 		for (auto imageView : m_SwapChainImageViews)
@@ -189,6 +194,24 @@ namespace VKPlayground {
 
 		result = vkCreateRenderPass(device->GetLogicalDevice(), &renderPassInfo, nullptr, &m_RenderPass);
 		ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan render pass");
+
+		// Create framebuffer for each image in the swap chain
+		m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
+		for (size_t i = 0; i < m_SwapChainImageViews.size(); i++)
+		{
+			VkFramebufferCreateInfo framebufferInfo{};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = m_RenderPass;
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = &m_SwapChainImageViews[i];
+			framebufferInfo.width = m_SwapChainExtent.width;
+			framebufferInfo.height = m_SwapChainExtent.height;
+			framebufferInfo.layers = 1;
+
+			result = vkCreateFramebuffer(device->GetLogicalDevice(), &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]);
+			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan framebuffer");
+		}
+
 	}
 
 }

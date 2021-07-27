@@ -15,6 +15,7 @@ namespace VKPlayground {
 	Application::~Application()
 	{
 		m_SwapChain.reset();
+		m_Renderer.reset();
 		m_Device.reset();
 		m_Window.reset();
 		m_VulkanInstance.reset();
@@ -33,6 +34,8 @@ namespace VKPlayground {
 
 		m_Device = CreateRef<VulkanDevice>();
 		m_SwapChain = CreateRef<VulkanSwapChain>();
+
+		m_Renderer = CreateRef<SimpleRenderer>();
 	}
 
 	void Application::Run()
@@ -40,6 +43,7 @@ namespace VKPlayground {
 		while (!m_Window->IsClosed())
 		{	
 			m_Window->Update();
+			m_Renderer->Render();
 		}
 	}
 

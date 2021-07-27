@@ -1,4 +1,5 @@
 #pragma once
+#include "SimpleRenderer.h"
 #include "VulkanPlayground/Graphics/Window.h"
 #include "VulkanPlayground/Graphics/VulkanInstance.h"
 #include "VulkanPlayground/Graphics/VulkanDevice.h"
@@ -33,6 +34,7 @@ namespace VKPlayground {
 		Ref<VulkanInstance> m_VulkanInstance;
 		Ref<VulkanDevice> m_Device;
 		Ref<VulkanSwapChain> m_SwapChain;
+		Ref<SimpleRenderer> m_Renderer;
 
 	private:
 		static Application* s_Instance;
