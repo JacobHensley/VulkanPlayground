@@ -5,6 +5,12 @@
 
 namespace VKPlayground {
 
+	struct SwapChainImage
+	{
+		VkImage Image;
+		VkImageView ImageView;
+	};
+
 	class VulkanSwapChain
 	{
 	public:
@@ -13,24 +19,27 @@ namespace VKPlayground {
 
 	public:
 		inline VkSwapchainKHR GetSwapChainHandle() { return m_SwapChain; }
-		inline VkExtent2D GetExtent() { return m_SwapChainExtent; }
 		inline VkRenderPass GetRenderPass() { return m_RenderPass; }
-		inline const std::vector<VkFramebuffer>& GetFramebuffers() { return m_SwapChainFramebuffers; }
+		inline const std::vector<VkFramebuffer>& GetFramebuffers() { return m_Framebuffers; }
+
+		inline VkExtent2D GetExtent() { return m_Extent; }
 
 	private:
 		void Init();
+		void PickDetails();
+		void CreateFramebuffers();
 
 	private:
 		VkSwapchainKHR m_SwapChain;
-
-		std::vector<VkImage> m_SwapChainImages;
-		std::vector<VkImageView> m_SwapChainImageViews;
-
-		VkFormat m_SwapChainImageFormat;
-		VkExtent2D m_SwapChainExtent;
-		std::vector<VkFramebuffer> m_SwapChainFramebuffers;
-
 		VkRenderPass m_RenderPass;
+
+		std::vector<SwapChainImage> m_Images;
+		std::vector<VkFramebuffer> m_Framebuffers;
+
+		VkSurfaceFormatKHR m_ImageFormat;
+		VkPresentModeKHR m_PresentMode;
+		VkExtent2D m_Extent;
+		uint32_t m_ImageCount;
 	};
 
 }

@@ -45,6 +45,7 @@ namespace VKPlayground {
 			m_Window->Update();
 			m_Renderer->Render();
 		}
+
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
 		vkDeviceWaitIdle(device->GetLogicalDevice());
 	}
