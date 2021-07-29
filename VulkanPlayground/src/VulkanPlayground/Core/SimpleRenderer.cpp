@@ -5,6 +5,8 @@
 
 namespace VKPlayground {
 
+	static const int MAX_FRAMES_IN_FLIGHT = 2;
+
 	SimpleRenderer::SimpleRenderer()
 	{
 		Init();
@@ -15,6 +17,13 @@ namespace VKPlayground {
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
 		vkDestroyCommandPool(device->GetLogicalDevice(), m_CommandPool, nullptr);
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			vkDestroySemaphore(device->GetLogicalDevice(), m_RenderFinishedSemaphores[i], nullptr);
+			vkDestroySemaphore(device->GetLogicalDevice(), m_ImageAvailableSemaphores[i], nullptr);
+			vkDestroyFence(device->GetLogicalDevice(), m_InFlightFences[i], nullptr);
+		}
 	}
 
 	void SimpleRenderer::Init()
@@ -23,6 +32,32 @@ namespace VKPlayground {
 		m_Pipeline = CreateRef<VulkanPipline>(m_Shader);
 
 		InitCommandBuffers();
+
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+
+		// Create synchronization objects
+		m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+		m_ImagesInFlight.resize(swapChain->GetFramebuffers().size(), VK_NULL_HANDLE);
+
+		VkSemaphoreCreateInfo semaphoreInfo{};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+		VkFenceCreateInfo fenceInfo{};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
+		{
+			VkResult result = vkCreateSemaphore(device->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]);
+			result = vkCreateSemaphore(device->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]);
+			result = vkCreateFence(device->GetLogicalDevice(), &fenceInfo, nullptr, &m_InFlightFences[i] );
+
+			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan Semaphores");
+		}
+
 	}
 
 	void SimpleRenderer::InitCommandBuffers()
@@ -90,8 +125,59 @@ namespace VKPlayground {
 		}
 	}
 
+	// TODO: Comment this function after class
 	void SimpleRenderer::Render()
 	{
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+		
+		vkWaitForFences(device->GetLogicalDevice(), 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
+		vkResetFences(device->GetLogicalDevice(), 1, &m_InFlightFences[m_CurrentFrame]);
+
+		uint32_t imageIndex;
+		vkAcquireNextImageKHR(device->GetLogicalDevice(), swapChain->GetSwapChainHandle(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+
+		if (m_ImagesInFlight[imageIndex] != VK_NULL_HANDLE) 
+		{
+			vkWaitForFences(device->GetLogicalDevice(), 1, &m_ImagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+		}
+
+		m_ImagesInFlight[imageIndex] = m_InFlightFences[m_CurrentFrame];
+
+		VkSemaphore waitSemaphores[] = { m_ImageAvailableSemaphores[m_CurrentFrame] };
+		VkSemaphore signalSemaphores[] = { m_RenderFinishedSemaphores[m_CurrentFrame] };
+		VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = waitSemaphores;
+		submitInfo.pWaitDstStageMask = waitStages;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &m_CommandBuffers[imageIndex];
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = signalSemaphores;
+
+		vkResetFences(device->GetLogicalDevice(), 1, &m_InFlightFences[m_CurrentFrame]);
+
+		VkResult result = vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]);
+		ASSERT(result == VK_SUCCESS, "Failed to submit Vulkan queue");
+
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = signalSemaphores;
+
+		VkSwapchainKHR swapChains[] = { swapChain->GetSwapChainHandle() };
+
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = swapChains;
+		presentInfo.pImageIndices = &imageIndex;
+		presentInfo.pResults = nullptr;
+
+		vkQueuePresentKHR(device->GetPresentsQueue(), &presentInfo);
+
+		m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 	}
 
 }

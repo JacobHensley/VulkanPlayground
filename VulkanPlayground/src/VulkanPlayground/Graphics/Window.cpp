@@ -13,6 +13,9 @@ namespace VKPlayground {
 
     Window::~Window()
     {
+        VkInstance instance = Application::GetApp().GetVulkanInstance()->GetInstanceHandle();
+        vkDestroySurfaceKHR(instance, m_VulkanSurface, nullptr);
+
         glfwDestroyWindow(m_WindowHandle);
         glfwTerminate();
     }

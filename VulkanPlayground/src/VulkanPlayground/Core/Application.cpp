@@ -14,8 +14,8 @@ namespace VKPlayground {
 
 	Application::~Application()
 	{
-		m_SwapChain.reset();
 		m_Renderer.reset();
+		m_SwapChain.reset();
 		m_Device.reset();
 		m_Window.reset();
 		m_VulkanInstance.reset();
@@ -45,6 +45,8 @@ namespace VKPlayground {
 			m_Window->Update();
 			m_Renderer->Render();
 		}
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+		vkDeviceWaitIdle(device->GetLogicalDevice());
 	}
 
 }

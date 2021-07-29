@@ -31,6 +31,9 @@ namespace VKPlayground {
 		inline SwapChainSupportDetails GetSwapChainSupportDetails() { return m_SwapChainSupportDetails; }
 		inline QueueFamilyIndices GetQueueIndices() { return m_QueueIndices; }
 		
+		inline VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
+		inline VkQueue GetPresentsQueue() { return m_PresentQueue; }
+
 		inline VkPhysicalDevice GetPhysicalDevice() { return m_PhysicalDevice; };
 		inline VkDevice GetLogicalDevice() { return m_LogicalDevice; };
 

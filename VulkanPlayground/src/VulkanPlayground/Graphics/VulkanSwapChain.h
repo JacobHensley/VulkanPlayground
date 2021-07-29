@@ -12,6 +12,7 @@ namespace VKPlayground {
 		~VulkanSwapChain();
 
 	public:
+		inline VkSwapchainKHR GetSwapChainHandle() { return m_SwapChain; }
 		inline VkExtent2D GetExtent() { return m_SwapChainExtent; }
 		inline VkRenderPass GetRenderPass() { return m_RenderPass; }
 		inline const std::vector<VkFramebuffer>& GetFramebuffers() { return m_SwapChainFramebuffers; }
