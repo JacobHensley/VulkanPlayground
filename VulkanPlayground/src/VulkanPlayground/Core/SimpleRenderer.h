@@ -2,7 +2,7 @@
 #include "VulkanPlayground/Graphics/Shader.h"
 #include "VulkanPlayground/Graphics/VulkanPipeline.h"
 #include "VulkanPlayground/Graphics/VertexBuffer.h"
-
+#include "VulkanPlayground/Graphics/IndexBuffer.h"
 #include <vulkan/vulkan.h>
 
 namespace VKPlayground  {
@@ -24,7 +24,9 @@ namespace VKPlayground  {
 		Ref<Shader> m_Shader;
 		Ref<VulkanPipeline> m_Pipeline;
 		Ref<VertexBuffer> m_VertexBuffer;
+		Ref<IndexBuffer> m_IndexBuffer;
 
+		// TODO: Move to SwapChain class
 		VkCommandPool m_CommandPool;
 		std::vector<VkCommandBuffer> m_CommandBuffers;
 		std::vector<VkSemaphore> m_ImageAvailableSemaphores;

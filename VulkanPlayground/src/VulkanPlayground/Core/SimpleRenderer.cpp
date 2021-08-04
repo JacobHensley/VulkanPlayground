@@ -32,13 +32,19 @@ namespace VKPlayground {
 		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader);
 
 		// Create vertex buffer
-		glm::vec3 vertices[3] = {
+		glm::vec3 vertices[4] = {
 			{ -0.5f, -0.5f, 0.0f },
-			{  0.0f,  0.5f, 0.0f },
-			{  0.5f, -0.5f, 0.0f }
+			{  0.5f, -0.5f, 0.0f },
+			{  0.5f,  0.5f, 0.0f },
+			{ -0.5f,  0.5f, 0.0f }
 		};
 
 		m_VertexBuffer = CreateRef<VertexBuffer>(&vertices, sizeof(vertices));
+
+		// Create index buffer
+		uint16_t indices[6] = { 0, 1, 2, 2, 3, 0 };
+
+		m_IndexBuffer = CreateRef<IndexBuffer>(&indices, sizeof(indices));
 
 		InitCommandBuffers();
 
@@ -127,7 +133,9 @@ namespace VKPlayground {
 			VkBuffer vertexBuffer = m_VertexBuffer->GetVulkanBuffer();
 			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, &vertexBuffer, &offset);
 
-			vkCmdDraw(m_CommandBuffers[i], 3, 1, 0, 0);
+			vkCmdBindIndexBuffer(m_CommandBuffers[i], m_IndexBuffer->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
+			vkCmdDrawIndexed(m_CommandBuffers[i], 6, 1, 0, 0, 0);
 
 			vkCmdEndRenderPass(m_CommandBuffers[i]);
 
