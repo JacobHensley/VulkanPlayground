@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "VulkanPipline.h"
+#include "VulkanPipeline.h"
 #include "VulkanPlayground/Core/Application.h"
 
 namespace VKPlayground {
@@ -9,14 +9,14 @@ namespace VKPlayground {
 		VK_DYNAMIC_STATE_LINE_WIDTH
 	};
 
-	VulkanPipline::VulkanPipline(Ref<Shader> shader)
+	VulkanPipeline::VulkanPipeline(Ref<Shader> shader)
 		: m_Shader(shader)
 	{
 		Init();
-		LOG_INFO("Initialized Vulkan pipline");
+		LOG_INFO("Initialized Vulkan pipeline");
 	}
 
-	VulkanPipline::~VulkanPipline()
+	VulkanPipeline::~VulkanPipeline()
 	{
 		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
 
@@ -24,15 +24,28 @@ namespace VKPlayground {
 		vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
 	}
 
-	void VulkanPipline::Init()
+	void VulkanPipeline::Init()
 	{
-		// Create vertex input (No vertex data)
+		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(1); // TODO: expand
+
+		// Vertex 0: Position
+		vertexInputAttributes[0].binding = 0;
+		vertexInputAttributes[0].location = 0;
+		vertexInputAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertexInputAttributes[0].offset = 0;
+
+		VkVertexInputBindingDescription vertexInputBinding = {};
+		vertexInputBinding.binding = 0;
+		vertexInputBinding.stride = sizeof(glm::vec3); // Size of entire vertex
+		vertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+		// Create vertex input
 		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-		vertexInputInfo.vertexBindingDescriptionCount = 0;
-		vertexInputInfo.pVertexBindingDescriptions = nullptr;   // Optional
-		vertexInputInfo.vertexAttributeDescriptionCount = 0;
-		vertexInputInfo.pVertexAttributeDescriptions = nullptr; // Optional
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.pVertexBindingDescriptions = &vertexInputBinding;
+		vertexInputInfo.vertexAttributeDescriptionCount = vertexInputAttributes.size();
+		vertexInputInfo.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
 		// Create input assembly
 		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
@@ -46,9 +59,9 @@ namespace VKPlayground {
 		// Create viewport
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = 0.0f;
+		viewport.y = (float)swapChainExtent.height;
 		viewport.width = (float)swapChainExtent.width;
-		viewport.height = (float)swapChainExtent.height;
+		viewport.height = -(float)swapChainExtent.height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 
@@ -72,7 +85,7 @@ namespace VKPlayground {
 		rasterizer.rasterizerDiscardEnable = VK_FALSE;
 		rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 		rasterizer.lineWidth = 1.0f;
-		rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
+		rasterizer.cullMode = VK_CULL_MODE_NONE;
 		rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 		rasterizer.depthBiasEnable = VK_FALSE;
 		rasterizer.depthBiasConstantFactor = 0.0f; // Optional

@@ -1,6 +1,8 @@
 #pragma once
 #include "VulkanPlayground/Graphics/Shader.h"
-#include "VulkanPlayground/Graphics/VulkanPipline.h"
+#include "VulkanPlayground/Graphics/VulkanPipeline.h"
+#include "VulkanPlayground/Graphics/VertexBuffer.h"
+
 #include <vulkan/vulkan.h>
 
 namespace VKPlayground  {
@@ -20,7 +22,8 @@ namespace VKPlayground  {
 
 	private:
 		Ref<Shader> m_Shader;
-		Ref<VulkanPipline> m_Pipeline;
+		Ref<VulkanPipeline> m_Pipeline;
+		Ref<VertexBuffer> m_VertexBuffer;
 
 		VkCommandPool m_CommandPool;
 		std::vector<VkCommandBuffer> m_CommandBuffers;

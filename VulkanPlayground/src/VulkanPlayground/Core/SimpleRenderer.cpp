@@ -29,7 +29,16 @@ namespace VKPlayground {
 	void SimpleRenderer::Init()
 	{
 		m_Shader = CreateRef<Shader>("assets/shaders/test.shader");
-		m_Pipeline = CreateRef<VulkanPipline>(m_Shader);
+		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader);
+
+		// Create vertex buffer
+		glm::vec3 vertices[3] = {
+			{ -0.5f, -0.5f, 0.0f },
+			{  0.0f,  0.5f, 0.0f },
+			{  0.5f, -0.5f, 0.0f }
+		};
+
+		m_VertexBuffer = CreateRef<VertexBuffer>(&vertices, sizeof(vertices));
 
 		InitCommandBuffers();
 
@@ -57,7 +66,6 @@ namespace VKPlayground {
 
 			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan Semaphores");
 		}
-
 	}
 
 	void SimpleRenderer::InitCommandBuffers()
@@ -110,10 +118,14 @@ namespace VKPlayground {
 			renderPassInfo.clearValueCount = 1;
 			renderPassInfo.pClearValues = &clearColor;
 
+			// Record commands
 			vkCmdBeginRenderPass(m_CommandBuffers[i], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 			
-			// Record commands
 			vkCmdBindPipeline(m_CommandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipeline());
+
+			VkDeviceSize offset = 0;
+			VkBuffer vertexBuffer = m_VertexBuffer->GetVulkanBuffer();
+			vkCmdBindVertexBuffers(m_CommandBuffers[i], 0, 1, &vertexBuffer, &offset);
 
 			vkCmdDraw(m_CommandBuffers[i], 3, 1, 0, 0);
 
@@ -125,7 +137,6 @@ namespace VKPlayground {
 		}
 	}
 
-	// TODO: Comment this function after class
 	void SimpleRenderer::Render()
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();

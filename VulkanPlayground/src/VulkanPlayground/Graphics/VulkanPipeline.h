@@ -1,14 +1,15 @@
 #pragma once
+#include "VulkanPlayground/Core/Core.h"
 #include "VulkanPlayground/Graphics/Shader.h"
 #include <vulkan/vulkan.h>
 
 namespace VKPlayground {
 
-	class VulkanPipline
+	class VulkanPipeline
 	{
 	public:
-		VulkanPipline(Ref<Shader> shader);
-		~VulkanPipline();
+		VulkanPipeline(Ref<Shader> shader);
+		~VulkanPipeline();
 
 	public:
 		inline VkPipeline GetPipeline() { return m_Pipeline; }

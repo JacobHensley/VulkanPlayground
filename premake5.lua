@@ -17,6 +17,7 @@ IncludeDir["Vulkan"] = VK_SDK_PATH .. "/include"
 IncludeDir["GLFW"]   = "VulkanPlayground/vendor/GLFW/include"
 IncludeDir["glm"]    = "VulkanPlayground/vendor/glm"
 IncludeDir["spdlog"] = "VulkanPlayground/vendor/spdlog/include"
+IncludeDir["VMA"]    = "VulkanPlayground/vendor/VMA/include"
 
 include "VulkanPlayground/vendor/GLFW"
 
@@ -46,6 +47,7 @@ project "VulkanPlayground"
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
+		"%{IncludeDir.VMA}",
 	}
 
 	links 
