@@ -19,6 +19,7 @@ namespace VKPlayground  {
 	private:
 		void Init();
 		void RecordCommandBuffers();
+		void RecreateSwapChain();
 
 	private:
 		Ref<Shader> m_Shader;

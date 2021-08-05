@@ -85,6 +85,20 @@ namespace VKPlayground {
 		}
 	}
 
+	void SimpleRenderer::RecreateSwapChain()
+	{
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+		vkDeviceWaitIdle(device->GetLogicalDevice());
+
+		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+
+		swapChain.reset();
+		m_Pipeline.reset();
+		
+		swapChain = CreateRef<VulkanSwapChain>();
+		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader);
+	}
+
 	// TODO: Comment this function
 	void SimpleRenderer::Render()
 	{
@@ -103,7 +117,15 @@ namespace VKPlayground {
 		vkResetFences(device->GetLogicalDevice(), 1, &inFlightFences[m_CurrentFrame]);
 
 		uint32_t imageIndex;
-		vkAcquireNextImageKHR(device->GetLogicalDevice(), swapChain->GetSwapChainHandle(), UINT64_MAX, imageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+		VkResult result = vkAcquireNextImageKHR(device->GetLogicalDevice(), swapChain->GetSwapChainHandle(), UINT64_MAX, imageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+			RecreateSwapChain();
+			return;
+		}
+		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+			ASSERT(false, "HELLO");
+		}
 
 		if (imagesInFlight[imageIndex] != VK_NULL_HANDLE)
 		{
@@ -128,8 +150,15 @@ namespace VKPlayground {
 
 		vkResetFences(device->GetLogicalDevice(), 1, &inFlightFences[m_CurrentFrame]);
 
-		VkResult result = vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[m_CurrentFrame]);
-		ASSERT(result == VK_SUCCESS, "Failed to submit Vulkan queue");
+		result = vkQueueSubmit(device->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[m_CurrentFrame]);
+	//	ASSERT(result == VK_SUCCESS, "Failed to submit Vulkan queue");
+
+		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+			RecreateSwapChain();
+		}
+		else if (result != VK_SUCCESS) {
+			ASSERT(false, "HELLO");
+		}
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;

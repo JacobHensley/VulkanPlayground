@@ -23,6 +23,9 @@ namespace VKPlayground {
 			vkDestroyFramebuffer(device->GetLogicalDevice(), framebuffer, nullptr);
 		}
 
+		// Free command buffers
+		vkFreeCommandBuffers(device->GetLogicalDevice(), m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+
 		// Destroy render pass
 		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
 
@@ -32,8 +35,8 @@ namespace VKPlayground {
 			vkDestroyImageView(device->GetLogicalDevice(), image.ImageView, nullptr);
 		}
 
-		// Destroy command pool
-		vkDestroyCommandPool(device->GetLogicalDevice(), m_CommandPool, nullptr);
+		// Destroy swap chain
+		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
 
 		// Destroy synchronization objects
 		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
@@ -43,15 +46,15 @@ namespace VKPlayground {
 			vkDestroyFence(device->GetLogicalDevice(), m_InFlightFences[i], nullptr);
 		}
 
-		// Destroy swap chain
-		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
+		// Destroy command pool
+		vkDestroyCommandPool(device->GetLogicalDevice(), m_CommandPool, nullptr);
 	}
 
 	void VulkanSwapChain::Init()
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
 		VkSurfaceKHR surface = Application::GetApp().GetWindow()->GetVulkanSurface();
-		SwapChainSupportDetails supportDetails = device->GetSwapChainSupportDetails();
+		SwapChainSupportDetails supportDetails = device->QuerySwapChainSupport(device->GetPhysicalDevice());
 
 		PickDetails();
 
@@ -110,7 +113,7 @@ namespace VKPlayground {
 	void VulkanSwapChain::PickDetails()
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
-		SwapChainSupportDetails supportDetails = device->GetSwapChainSupportDetails();
+		SwapChainSupportDetails supportDetails = device->QuerySwapChainSupport(device->GetPhysicalDevice());
 
 		// Select format
 		std::vector<VkSurfaceFormatKHR> formats = supportDetails.Formats;

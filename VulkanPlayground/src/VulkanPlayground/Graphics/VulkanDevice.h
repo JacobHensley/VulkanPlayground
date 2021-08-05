@@ -7,10 +7,11 @@ namespace VKPlayground {
 	{
 		std::optional<uint32_t> GraphicsQueue;
 		std::optional<uint32_t> PresentQueue;
+		std::optional<uint32_t> TransferQueue;
 
 		bool isComplete()
 		{
-			return GraphicsQueue.has_value() && PresentQueue.has_value();
+			return GraphicsQueue.has_value() && PresentQueue.has_value() && TransferQueue.has_value();
 		}
 	};
 
@@ -29,6 +30,8 @@ namespace VKPlayground {
 
 	public:
 		inline SwapChainSupportDetails GetSwapChainSupportDetails() { return m_SwapChainSupportDetails; }
+		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+
 		inline QueueFamilyIndices GetQueueIndices() { return m_QueueIndices; }
 		
 		inline VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
@@ -43,7 +46,6 @@ namespace VKPlayground {
 		bool IsDeviceSuitable(VkPhysicalDevice device);
 		bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 		QueueFamilyIndices FindQueueIndices(VkPhysicalDevice device);
-		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 
 	private:
 		VkPhysicalDevice m_PhysicalDevice = nullptr;

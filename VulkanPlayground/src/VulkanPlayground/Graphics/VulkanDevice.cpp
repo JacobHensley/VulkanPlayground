@@ -55,7 +55,7 @@ namespace VKPlayground {
 
 		// Create info for all queues
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-		std::set<uint32_t> uniqueQueueFamilies = { indices.GraphicsQueue.value(), indices.PresentQueue.value() };
+		std::set<uint32_t> uniqueQueueFamilies = { indices.GraphicsQueue.value(), indices.PresentQueue.value(), indices.TransferQueue.value() };
 
 		float queuePriority = 1.0f;
 		for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -95,15 +95,18 @@ namespace VKPlayground {
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
 		QueueFamilyIndices indices = FindQueueIndices(device);
-
+			
+		// Check is all required extensions are supported
 		bool extensionsSupported = CheckDeviceExtensionSupport(device);
 		bool swapChainAdequate = false;
 		if (extensionsSupported)
 		{
+			// Check to make sure there supported formats and present modes
 			SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(device);
 			swapChainAdequate = !swapChainSupport.Formats.empty() && !swapChainSupport.PresentModes.empty();
 		}
 
+		// Check to make sure the device is dedicated and has all required queues
 		return deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && indices.isComplete() && extensionsSupported && swapChainAdequate;
 	}
 
@@ -139,12 +142,13 @@ namespace VKPlayground {
 		QueueFamilyIndices indices;
 		for (int i = 0; i < queueFamilyCount; i++)
 		{
+			// Find graphics queue
 			if (queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT)
 			{
 				indices.GraphicsQueue = i;
 			}
 
-			// Check if queue supports presenting
+			// Find present queue
 			// TODO: Pick best queue for presenting
 			VkSurfaceKHR surface = Application::GetApp().GetWindow()->GetVulkanSurface();
 			VkBool32 presentSupport = false;
@@ -152,6 +156,12 @@ namespace VKPlayground {
 			if (presentSupport)
 			{
 				indices.PresentQueue = i;
+			}
+
+			// Find transfer queue
+			if ((queueFamilies[i].queueFlags & VK_QUEUE_TRANSFER_BIT) && ((queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((queueFamilies[i].queueFlags & VK_QUEUE_COMPUTE_BIT) == 0))
+			{
+				indices.TransferQueue = i;
 			}
 		}
 
