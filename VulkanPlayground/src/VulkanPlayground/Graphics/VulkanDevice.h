@@ -46,11 +46,11 @@ namespace VKPlayground {
 		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 
 	private:
-		VkPhysicalDevice m_PhysicalDevice = VK_NULL_HANDLE;
-		VkDevice m_LogicalDevice = VK_NULL_HANDLE;
+		VkPhysicalDevice m_PhysicalDevice = nullptr;
+		VkDevice m_LogicalDevice = nullptr;
 
-		VkQueue m_GraphicsQueue;
-		VkQueue m_PresentQueue;
+		VkQueue m_GraphicsQueue = nullptr;
+		VkQueue m_PresentQueue = nullptr;
 
 		SwapChainSupportDetails m_SwapChainSupportDetails;
 		QueueFamilyIndices m_QueueIndices;

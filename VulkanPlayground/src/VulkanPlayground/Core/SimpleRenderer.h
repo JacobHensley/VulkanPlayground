@@ -18,21 +18,13 @@ namespace VKPlayground  {
 
 	private:
 		void Init();
-		void InitCommandBuffers();
+		void RecordCommandBuffers();
 
 	private:
 		Ref<Shader> m_Shader;
 		Ref<VulkanPipeline> m_Pipeline;
 		Ref<VertexBuffer> m_VertexBuffer;
 		Ref<IndexBuffer> m_IndexBuffer;
-
-		// TODO: Move to SwapChain class
-		VkCommandPool m_CommandPool;
-		std::vector<VkCommandBuffer> m_CommandBuffers;
-		std::vector<VkSemaphore> m_ImageAvailableSemaphores;
-		std::vector<VkSemaphore> m_RenderFinishedSemaphores;
-		std::vector<VkFence> m_InFlightFences;
-		std::vector<VkFence> m_ImagesInFlight;
 
 		size_t m_CurrentFrame = 0;
 	};

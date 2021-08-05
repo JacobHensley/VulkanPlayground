@@ -26,7 +26,7 @@ namespace VKPlayground {
 
 	void VulkanPipeline::Init()
 	{
-		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(1); // TODO: expand
+		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(1);
 
 		// Vertex 0: Position
 		vertexInputAttributes[0].binding = 0;

@@ -18,8 +18,8 @@ namespace VKPlayground {
 		void Init();
 
 	private:
-		VkPipeline m_Pipeline;
-		VkPipelineLayout m_PipelineLayout;
+		VkPipeline m_Pipeline = nullptr;
+		VkPipelineLayout m_PipelineLayout = nullptr;
 
 		Ref<Shader> m_Shader;
 	};

@@ -14,15 +14,15 @@ namespace VKPlayground {
 
 	private:
 		void Init();
-		void InitDebugCallback();
+		void CreateDebugCallback();
 
 	private:
-		VkInstance m_Instance;
+		VkInstance m_Instance = nullptr;
 		std::string m_Name;
 
-		PFN_vkCreateDebugUtilsMessengerEXT m_CreateDebugUtilsMessengerEXT;
-		PFN_vkDestroyDebugUtilsMessengerEXT m_DestroyDebugUtilsMessengerEXT;
-		VkDebugUtilsMessengerEXT m_DebugUtilsMessenger;
+		PFN_vkCreateDebugUtilsMessengerEXT m_CreateDebugUtilsMessengerEXT = nullptr;
+		PFN_vkDestroyDebugUtilsMessengerEXT m_DestroyDebugUtilsMessengerEXT = nullptr;
+		VkDebugUtilsMessengerEXT m_DebugUtilsMessenger = nullptr;
 	};
 
 }

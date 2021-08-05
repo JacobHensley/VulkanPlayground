@@ -5,6 +5,8 @@
 
 namespace VKPlayground {
 
+	static const int MAX_FRAMES_IN_FLIGHT = 2;
+
 	VulkanSwapChain::VulkanSwapChain()
 	{
 		Init();
@@ -15,18 +17,33 @@ namespace VKPlayground {
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
 
+		// Destroy framebuffers
 		for (auto framebuffer : m_Framebuffers)
 		{
 			vkDestroyFramebuffer(device->GetLogicalDevice(), framebuffer, nullptr);
 		}
 
+		// Destroy render pass
 		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
 
+		// Destroy image views
 		for (auto image : m_Images)
 		{
 			vkDestroyImageView(device->GetLogicalDevice(), image.ImageView, nullptr);
 		}
 
+		// Destroy command pool
+		vkDestroyCommandPool(device->GetLogicalDevice(), m_CommandPool, nullptr);
+
+		// Destroy synchronization objects
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			vkDestroySemaphore(device->GetLogicalDevice(), m_RenderFinishedSemaphores[i], nullptr);
+			vkDestroySemaphore(device->GetLogicalDevice(), m_ImageAvailableSemaphores[i], nullptr);
+			vkDestroyFence(device->GetLogicalDevice(), m_InFlightFences[i], nullptr);
+		}
+
+		// Destroy swap chain
 		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
 	}
 
@@ -84,32 +101,10 @@ namespace VKPlayground {
 		for (int i = 0; i < m_ImageCount; i++)
 			m_Images[i].Image = images[i];
 
-		// Create image views
-		for (int i = 0; i < m_Images.size(); i++)
-		{
-			VkImageViewCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = m_Images[i].Image;
-
-			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			createInfo.format = m_ImageFormat.format;
-
-			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			createInfo.subresourceRange.baseMipLevel = 0;
-			createInfo.subresourceRange.levelCount = 1;
-			createInfo.subresourceRange.baseArrayLayer = 0;
-			createInfo.subresourceRange.layerCount = 1;
-			
-			VkResult result = vkCreateImageView(device->GetLogicalDevice(), &createInfo, nullptr, &m_Images[i].ImageView);
-			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan image view");
-		}
-
+		CreateImageViews();
 		CreateFramebuffers();
+		CreateCommandBuffers();
+		CreateSynchronizationObjects();
 	}
 
 	void VulkanSwapChain::PickDetails()
@@ -172,6 +167,36 @@ namespace VKPlayground {
 		m_PresentMode = selectedPresentMode;
 		m_Extent = selectedExtent;
 		m_ImageCount = imageCount;
+	}
+
+	void VulkanSwapChain::CreateImageViews()
+	{
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+
+		// Create image views
+		for (int i = 0; i < m_Images.size(); i++)
+		{
+			VkImageViewCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = m_Images[i].Image;
+
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = m_ImageFormat.format;
+
+			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.baseMipLevel = 0;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = 0;
+			createInfo.subresourceRange.layerCount = 1;
+
+			VkResult result = vkCreateImageView(device->GetLogicalDevice(), &createInfo, nullptr, &m_Images[i].ImageView);
+			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan image view");
+		}
 	}
 
 	void VulkanSwapChain::CreateFramebuffers()
@@ -237,6 +262,62 @@ namespace VKPlayground {
 
 			result = vkCreateFramebuffer(device->GetLogicalDevice(), &framebufferInfo, nullptr, &m_Framebuffers[i]);
 			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan framebuffer");
+		}
+	}
+
+	void VulkanSwapChain::CreateCommandBuffers()
+	{
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+		QueueFamilyIndices queueIndices = device->GetQueueIndices();
+
+		// Create command pool
+		VkCommandPoolCreateInfo poolInfo{};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.queueFamilyIndex = queueIndices.GraphicsQueue.value();
+		poolInfo.flags = 0; // Optional
+
+		VkResult result = vkCreateCommandPool(device->GetLogicalDevice(), &poolInfo, nullptr, &m_CommandPool);
+		ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan command pool");
+
+		m_CommandBuffers.resize(m_Framebuffers.size());
+
+		// Create command buffers
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = m_CommandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = (uint32_t)m_CommandBuffers.size();
+
+		result = vkAllocateCommandBuffers(device->GetLogicalDevice(), &allocInfo, m_CommandBuffers.data());
+		ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan command buffers");
+	}
+
+	void VulkanSwapChain::CreateSynchronizationObjects()
+	{
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+
+		m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+		m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+		m_ImagesInFlight.resize(m_Framebuffers.size(), VK_NULL_HANDLE);
+
+		// Semaphore info
+		VkSemaphoreCreateInfo semaphoreInfo{};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+		// Fence info
+		VkFenceCreateInfo fenceInfo{};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		// Create synchronization objects
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			VkResult result = vkCreateSemaphore(device->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i]);
+			result = vkCreateSemaphore(device->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_RenderFinishedSemaphores[i]);
+			result = vkCreateFence(device->GetLogicalDevice(), &fenceInfo, nullptr, &m_InFlightFences[i]);
+
+			ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan Semaphores");
 		}
 	}
 

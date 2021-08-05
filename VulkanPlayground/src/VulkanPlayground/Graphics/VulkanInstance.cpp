@@ -170,13 +170,13 @@ namespace VKPlayground {
         VkResult result = vkCreateInstance(&createInfo, nullptr, &m_Instance);
         ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan instance");
 
-        InitDebugCallback();
+        CreateDebugCallback();
 
         Utils::PrintAvailableExtensions();
         Utils::PrintAvailableLayers();
     }
 
-    void VulkanInstance::InitDebugCallback()
+    void VulkanInstance::CreateDebugCallback()
     {
         // Load debug utils extension functions
         m_CreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(m_Instance, "vkCreateDebugUtilsMessengerEXT"));
