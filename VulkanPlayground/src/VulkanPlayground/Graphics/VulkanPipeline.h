@@ -1,5 +1,4 @@
 #pragma once
-#include "VulkanPlayground/Core/Core.h"
 #include "VulkanPlayground/Graphics/Shader.h"
 #include <vulkan/vulkan.h>
 

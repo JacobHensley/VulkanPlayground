@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Shader.h"
 #include "VulkanPlayground/Core/Application.h"
+#include "VulkanPlayground/Core/VulkanTools.h"
 #include <shaderc/shaderc.hpp>
 
 namespace VKPlayground {
@@ -90,8 +91,7 @@ namespace VKPlayground {
 			createInfo.pCode = reinterpret_cast<const uint32_t*>(data);
 
 			VkShaderModule shaderModule;
-			VkResult result = vkCreateShaderModule(logicalDevice, &createInfo, nullptr, &shaderModule);
-			ASSERT(result == VK_SUCCESS, "Failed to initialize shader module");
+			VK_CHECK_RESULT(vkCreateShaderModule(logicalDevice, &createInfo, nullptr, &shaderModule));
 
 			// Create shader stage
 			VkPipelineShaderStageCreateInfo shaderStageInfo{};

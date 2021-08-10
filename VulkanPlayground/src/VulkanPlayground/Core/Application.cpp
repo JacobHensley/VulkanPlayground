@@ -48,7 +48,9 @@ namespace VKPlayground {
 		while (!m_Window->IsClosed())
 		{	
 			m_Window->Update();
+			m_SwapChain->BeginFrame();
 			m_Renderer->Render();
+			m_SwapChain->Present();
 		}
 
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();

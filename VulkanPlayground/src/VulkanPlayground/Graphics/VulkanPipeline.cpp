@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "VulkanPipeline.h"
 #include "VulkanPlayground/Core/Application.h"
+#include "VulkanPlayground/Core/VulkanTools.h"
 
 namespace VKPlayground {
 
@@ -141,8 +142,7 @@ namespace VKPlayground {
 
 		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
 
-		VkResult result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout);
-		ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan pipeline layout");
+		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
 		const std::vector<VkPipelineShaderStageCreateInfo>& shaderCreateInfo = m_Shader->GetShaderCreateInfo();
 		VkRenderPass renderPass = swapChain->GetRenderPass();
@@ -166,8 +166,7 @@ namespace VKPlayground {
 		pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 		pipelineInfo.basePipelineIndex = -1;              // Optional
 
-		vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline);
-		ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan pipeline");
+		VK_CHECK_RESULT(vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_Pipeline));
 	}
 
 }

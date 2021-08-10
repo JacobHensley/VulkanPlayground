@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "VulkanInstance.h"
+#include "VulkanPlayground/Core/VulkanTools.h"
 #include <GLFW/glfw3.h>
 
 static const bool s_EnableValidationLayers = true;
@@ -167,8 +168,7 @@ namespace VKPlayground {
         }
 
         // Create instance
-        VkResult result = vkCreateInstance(&createInfo, nullptr, &m_Instance);
-        ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan instance");
+        VK_CHECK_RESULT(vkCreateInstance(&createInfo, nullptr, &m_Instance));
 
         CreateDebugCallback();
 
@@ -185,9 +185,7 @@ namespace VKPlayground {
         // Create debug callback and set it to m_DebugUtilsMessenger
         VkDebugUtilsMessengerCreateInfoEXT createInfo;
         Utils::PopulateDebugMessengerCreateInfo(createInfo);
-        VkResult result = m_CreateDebugUtilsMessengerEXT(m_Instance, &createInfo, nullptr, &m_DebugUtilsMessenger);
-
-        ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan debug callback");
+        VK_CHECK_RESULT(m_CreateDebugUtilsMessengerEXT(m_Instance, &createInfo, nullptr, &m_DebugUtilsMessenger));
     }
 
 }

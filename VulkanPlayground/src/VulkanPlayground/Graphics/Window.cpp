@@ -38,15 +38,9 @@ namespace VKPlayground {
 
     void Window::InitVulkanSurface()
     {
-        VkWin32SurfaceCreateInfoKHR createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-        createInfo.hwnd = glfwGetWin32Window(m_WindowHandle);
-        createInfo.hinstance = GetModuleHandle(nullptr);
-
         VkInstance instance = Application::GetApp().GetVulkanInstance()->GetInstanceHandle();
 
-        VkResult result = vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &m_VulkanSurface);
-        ASSERT(result == VK_SUCCESS, "Failed to initialize Vulkan surface");
+        glfwCreateWindowSurface(instance, m_WindowHandle, nullptr, &m_VulkanSurface);
 
         LOG_INFO("Initialized Vulkan surface");
     }

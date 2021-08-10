@@ -3,7 +3,6 @@
 #include "VulkanPlayground/Graphics/VulkanPipeline.h"
 #include "VulkanPlayground/Graphics/VertexBuffer.h"
 #include "VulkanPlayground/Graphics/IndexBuffer.h"
-#include <vulkan/vulkan.h>
 
 namespace VKPlayground  {
 
@@ -18,8 +17,6 @@ namespace VKPlayground  {
 
 	private:
 		void Init();
-		void RecordCommandBuffers();
-		void RecreateSwapChain();
 
 	private:
 		Ref<Shader> m_Shader;

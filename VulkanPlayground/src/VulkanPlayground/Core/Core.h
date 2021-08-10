@@ -8,7 +8,7 @@
 #endif
 
 namespace VKPlayground {
-
+	
 	template<typename T>
 	using Scope = std::unique_ptr<T>;
 
@@ -26,4 +26,5 @@ namespace VKPlayground {
 	{
 		return std::make_shared<T>(std::forward<Args>(args)...);
 	}
+
 }

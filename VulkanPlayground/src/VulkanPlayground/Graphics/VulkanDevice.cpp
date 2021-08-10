@@ -2,6 +2,7 @@
 #include "VulkanDevice.h"
 #include "VulkanInstance.h"
 #include "VulkanPlayground/Core/Application.h"
+#include "VulkanPlayground/Core/VulkanTools.h"
 
 static const std::vector<const char*> s_DeviceExtensions = 
 {
@@ -81,8 +82,7 @@ namespace VKPlayground {
 		createInfo.pEnabledFeatures = &deviceFeatures;
 
 		// Create logical device
-		VkResult result = vkCreateDevice(m_PhysicalDevice, &createInfo, nullptr, &m_LogicalDevice);
-		ASSERT(result == VK_SUCCESS, "Failed to initialize logical device");
+		VK_CHECK_RESULT(vkCreateDevice(m_PhysicalDevice, &createInfo, nullptr, &m_LogicalDevice));
 
 		// Create queue handles
 		vkGetDeviceQueue(m_LogicalDevice, indices.GraphicsQueue.value(), 0, &m_GraphicsQueue);
@@ -153,6 +153,7 @@ namespace VKPlayground {
 			VkSurfaceKHR surface = Application::GetApp().GetWindow()->GetVulkanSurface();
 			VkBool32 presentSupport = false;
 			vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+
 			if (presentSupport)
 			{
 				indices.PresentQueue = i;
