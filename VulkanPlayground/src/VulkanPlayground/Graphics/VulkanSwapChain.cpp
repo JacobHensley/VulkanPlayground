@@ -143,8 +143,7 @@ namespace VKPlayground {
 
 		if (result != VK_SUCCESS)
 		{
-			std::cout << "Needs resize!\n";
-			return;
+			Resize();
 		}
 
 		m_CurrentBufferIndex = (m_CurrentBufferIndex + 1) % MAX_FRAMES_IN_FLIGHT;
@@ -359,6 +358,37 @@ namespace VKPlayground {
 		{
 			VK_CHECK_RESULT(vkCreateSemaphore(device->GetLogicalDevice(), &semaphoreInfo, nullptr, &m_RenderCompleteSemaphores[i]));
 		}		
+	}
+
+	void VulkanSwapChain::Resize()
+	{
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+
+		vkDeviceWaitIdle(device->GetLogicalDevice());
+
+		// Destroy framebuffers
+		for (auto framebuffer : m_Framebuffers)
+		{
+			vkDestroyFramebuffer(device->GetLogicalDevice(), framebuffer, nullptr);
+		}
+
+		// Free command buffers
+		vkFreeCommandBuffers(device->GetLogicalDevice(), m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
+
+		// Destroy render pass
+		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
+
+		// Destroy image views
+		for (auto image : m_Images)
+		{
+			vkDestroyImageView(device->GetLogicalDevice(), image.ImageView, nullptr);
+		}
+
+		// Destroy swap chain
+		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
+
+		// Recreate swap chain
+		Init();
 	}
 
 	VkResult VulkanSwapChain::QueuePresent(VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore)

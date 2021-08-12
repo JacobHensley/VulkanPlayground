@@ -40,6 +40,7 @@ namespace VKPlayground {
 		void CreateCommandBuffers();
 		void CreateSynchronizationObjects();
 
+		void Resize();
 		VkResult QueuePresent(VkQueue queue, uint32_t imageIndex, VkSemaphore waitSemaphore);
 
 	private:
