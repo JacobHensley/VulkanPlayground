@@ -75,7 +75,6 @@ namespace VKPlayground {
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipeline());
 
-		// NOTE: Unsure of performance impact of updating viewport every frame, if this is an issue we will check to see if the viewport has changed before updating.
 		// Update viewport
 		VkViewport viewport{};
 		viewport.x = 0.0f;

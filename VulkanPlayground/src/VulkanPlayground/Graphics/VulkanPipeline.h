@@ -19,6 +19,7 @@ namespace VKPlayground {
 	private:
 		VkPipeline m_Pipeline = nullptr;
 		VkPipelineLayout m_PipelineLayout = nullptr;
+		std::vector<VkDescriptorSetLayout> m_DescriptorSets;
 
 		Ref<Shader> m_Shader;
 	};

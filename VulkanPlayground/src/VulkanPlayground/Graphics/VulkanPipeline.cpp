@@ -21,6 +21,11 @@ namespace VKPlayground {
 	{
 		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
 
+		for (int i = 0; i < m_DescriptorSets.size(); i++)
+		{
+			vkDestroyDescriptorSetLayout(device, m_DescriptorSets[i], nullptr);
+		}
+
 		vkDestroyPipeline(device, m_Pipeline, nullptr);
 		vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
 	}
@@ -54,6 +59,7 @@ namespace VKPlayground {
 		inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		inputAssembly.primitiveRestartEnable = VK_FALSE;
 
+		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
 		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
 		VkExtent2D swapChainExtent = swapChain->GetExtent();
 
@@ -132,15 +138,43 @@ namespace VKPlayground {
 		dynamicState.dynamicStateCount = 2;
 		dynamicState.pDynamicStates = s_DynamicStates;
 
-		// Set pipeline layout (Currently there are no descriptor sets)
+		// Define uniform buffers as descriptors
+		std::vector<UniformBuffer> uniformBuffers = m_Shader->GetUniformBufferDescriptions();
+		std::unordered_map<int, std::vector<VkDescriptorSetLayoutBinding>> descriptorBindings;
+
+		for (int i = 0; i < uniformBuffers.size(); i++)
+		{
+			VkDescriptorSetLayoutBinding buffer{};
+			buffer.binding = uniformBuffers[i].BindingPoint;
+			buffer.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			buffer.descriptorCount = 1;
+			buffer.stageFlags = VK_SHADER_STAGE_ALL;
+			buffer.pImmutableSamplers = nullptr; // Optional
+			descriptorBindings[uniformBuffers[i].DescriptorSet].push_back(buffer);
+		}
+
+		// Create descriptor sets and fill m_DescriptorSets
+		int i = 0;
+		for (auto const& [descriptorSetID, bufferBindings] : descriptorBindings)
+		{
+			VkDescriptorSetLayoutCreateInfo layoutInfo{};
+			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			layoutInfo.bindingCount = bufferBindings.size();
+			layoutInfo.pBindings = bufferBindings.data();
+
+			VkDescriptorSetLayout& descriptorSetLayout = m_DescriptorSets.emplace_back();
+
+			VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout));
+			i++;
+		}
+
+		// Set pipeline layout
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;            // Optional
-		pipelineLayoutInfo.pSetLayouts = nullptr;         // Optional
+		pipelineLayoutInfo.setLayoutCount = m_DescriptorSets.size();
+		pipelineLayoutInfo.pSetLayouts = m_DescriptorSets.data();
 		pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
 		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
 
 		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
