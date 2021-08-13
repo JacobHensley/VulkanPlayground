@@ -16,41 +16,7 @@ namespace VKPlayground {
 
 	VulkanSwapChain::~VulkanSwapChain()
 	{
-		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
-
-		// Destroy framebuffers
-		for (auto framebuffer : m_Framebuffers)
-		{
-			vkDestroyFramebuffer(device->GetLogicalDevice(), framebuffer, nullptr);
-		}
-
-		// Destroy render pass
-		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
-
-		// Destroy image views
-		for (auto image : m_Images)
-		{
-			vkDestroyImageView(device->GetLogicalDevice(), image.ImageView, nullptr);
-		}
-
-		// Destroy synchronization objects
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-		{
-			vkDestroySemaphore(device->GetLogicalDevice(), m_PresentCompleteSemaphores[i], nullptr);
-			vkDestroyFence(device->GetLogicalDevice(), m_WaitFences[i], nullptr);
-		}
-
-		for (int i = 0; i < 3; i++)
-		{
-			vkDestroySemaphore(device->GetLogicalDevice(), m_RenderCompleteSemaphores[i], nullptr);
-		}
-
-		// Destroy command pool
-		vkDestroyCommandPool(device->GetLogicalDevice(), m_CommandPool, nullptr);
-
-		// Destroy swap chain
-		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
-		VK_CHECK_RESULT(vkDeviceWaitIdle(device->GetLogicalDevice()));
+		Destroy();
 	}
 
 	void VulkanSwapChain::Init()
@@ -112,6 +78,44 @@ namespace VKPlayground {
 		CreateFramebuffers();
 		CreateCommandBuffers();
 		CreateSynchronizationObjects();
+	}
+
+	void VulkanSwapChain::Destroy()
+	{
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+
+		// Destroy framebuffers
+		for (auto framebuffer : m_Framebuffers)
+		{
+			vkDestroyFramebuffer(device->GetLogicalDevice(), framebuffer, nullptr);
+		}
+
+		// Destroy render pass
+		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
+
+		// Destroy image views
+		for (auto image : m_Images)
+		{
+			vkDestroyImageView(device->GetLogicalDevice(), image.ImageView, nullptr);
+		}
+
+		// Destroy synchronization objects
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+		{
+			vkDestroySemaphore(device->GetLogicalDevice(), m_PresentCompleteSemaphores[i], nullptr);
+			vkDestroyFence(device->GetLogicalDevice(), m_WaitFences[i], nullptr);
+		}
+
+		for (int i = 0; i < 3; i++)
+		{
+			vkDestroySemaphore(device->GetLogicalDevice(), m_RenderCompleteSemaphores[i], nullptr);
+		}
+
+		// Destroy command pool
+		vkDestroyCommandPool(device->GetLogicalDevice(), m_CommandPool, nullptr);
+
+		// Destroy swap chain
+		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
 	}
 
 	void VulkanSwapChain::BeginFrame()
@@ -366,28 +370,8 @@ namespace VKPlayground {
 
 		vkDeviceWaitIdle(device->GetLogicalDevice());
 
-		// Destroy framebuffers
-		for (auto framebuffer : m_Framebuffers)
-		{
-			vkDestroyFramebuffer(device->GetLogicalDevice(), framebuffer, nullptr);
-		}
-
-		// Free command buffers
-		vkFreeCommandBuffers(device->GetLogicalDevice(), m_CommandPool, static_cast<uint32_t>(m_CommandBuffers.size()), m_CommandBuffers.data());
-
-		// Destroy render pass
-		vkDestroyRenderPass(device->GetLogicalDevice(), m_RenderPass, nullptr);
-
-		// Destroy image views
-		for (auto image : m_Images)
-		{
-			vkDestroyImageView(device->GetLogicalDevice(), image.ImageView, nullptr);
-		}
-
-		// Destroy swap chain
-		vkDestroySwapchainKHR(device->GetLogicalDevice(), m_SwapChain, nullptr);
-
 		// Recreate swap chain
+		Destroy();
 		Init();
 	}
 

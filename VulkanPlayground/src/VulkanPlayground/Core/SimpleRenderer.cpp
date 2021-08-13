@@ -75,6 +75,17 @@ namespace VKPlayground {
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipeline());
 
+		// NOTE: Unsure of performance impact of updating viewport every frame, if this is an issue we will check to see if the viewport has changed before updating.
+		// Update viewport
+		VkViewport viewport{};
+		viewport.x = 0.0f;
+		viewport.y = (float)swapChain->GetExtent().height;
+		viewport.width = (float)swapChain->GetExtent().width;
+		viewport.height = -(float)swapChain->GetExtent().height;
+		viewport.minDepth = 0.0f;
+		viewport.maxDepth = 1.0f;
+		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
 		VkDeviceSize offset = 0;
 		VkBuffer vertexBuffer = m_VertexBuffer->GetVulkanBuffer();
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);

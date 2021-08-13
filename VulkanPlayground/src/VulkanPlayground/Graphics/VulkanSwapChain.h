@@ -34,6 +34,8 @@ namespace VKPlayground {
 
 	private:
 		void Init();
+		void Destroy();
+
 		void PickDetails();
 		void CreateImageViews();
 		void CreateFramebuffers();
