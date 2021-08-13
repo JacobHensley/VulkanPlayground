@@ -4,6 +4,9 @@
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include <shaderc/shaderc.hpp>
 
+#include "spirv_cross.hpp"
+#include "spirv_common.hpp"
+
 namespace VKPlayground {
 
 	namespace Utils {
@@ -32,6 +35,45 @@ namespace VKPlayground {
 
 			ASSERT(false, "Unknown Type");
 			return (VkShaderStageFlagBits)0;
+		}
+
+		// NOTE: This only takes in base type and size into account so arrays will be given the wrong type. If this becomes a issue we will change to vecsize.
+		static ShaderUniformType GetUniformType(spirv_cross::SPIRType baseType, uint32_t size)
+		{
+			spirv_cross::SPIRType::BaseType type = baseType.basetype;
+
+			if (type == spirv_cross::SPIRType::Float)
+			{
+				if (size == 4)			return ShaderUniformType::FLOAT;
+				else if (size == 4 * 2) return ShaderUniformType::FLOAT2;
+				else if (size == 4 * 3) return ShaderUniformType::FLOAT3;
+				else if (size == 4 * 4) return ShaderUniformType::FLOAT4;
+				else if (size == 64)	return ShaderUniformType::MAT4;
+			}
+			else if (type == spirv_cross::SPIRType::Int)	 return ShaderUniformType::INT;
+			else if (type == spirv_cross::SPIRType::Boolean) return ShaderUniformType::BOOL;
+
+			ASSERT(false, "Unknown Type");
+			return (ShaderUniformType)0;
+		}
+
+		static ShaderUniformType GetResourceType(spirv_cross::SPIRType baseType, uint32_t dimension)
+		{
+			spirv_cross::SPIRType::BaseType type = baseType.basetype;
+
+			if (type == spirv_cross::SPIRType::Image)
+			{
+				if (dimension == 1)	     return ShaderUniformType::TEXTURE_2D;
+				else if (dimension == 3) return ShaderUniformType::TEXTURE_CUBE;
+			}
+			else if (type == spirv_cross::SPIRType::SampledImage)
+			{
+				if (dimension == 1)		 return ShaderUniformType::TEXTURE_2D;
+				else if (dimension == 3) return ShaderUniformType::TEXTURE_CUBE;
+			}
+
+			ASSERT(false, "Unknown Type");
+			return (ShaderUniformType)0;
 		}
 
 	}
@@ -84,6 +126,8 @@ namespace VKPlayground {
 			const uint8_t* dataEnd = reinterpret_cast<const uint8_t*>(compilationResult.cend());
 			uint32_t size = dataEnd - data;
 
+			std::vector<uint32_t> spirv(compilationResult.cbegin(), compilationResult.cend());
+
 			// Create shader module
 			VkShaderModuleCreateInfo createInfo{};
 			createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -102,7 +146,56 @@ namespace VKPlayground {
 
 			// Save shader stage info
 			m_ShaderCreateInfo.push_back(shaderStageInfo);
+			ReflectShader(spirv, stage);
 		}
+	}
+
+	// TODO: Get info about push constants, other types of buffers and potentially vertex attributes
+	void Shader::ReflectShader(const std::vector<uint32_t>& data, ShaderStage stage)
+	{
+		spirv_cross::Compiler compiler(data);
+		spirv_cross::ShaderResources resources = compiler.get_shader_resources();
+
+		// Get all uniform buffers
+		for (const spirv_cross::Resource& resource : resources.uniform_buffers)
+		{
+			auto& bufferType = compiler.get_type(resource.base_type_id);
+			int memberCount = bufferType.member_types.size();
+
+			UniformBuffer& buffer = m_UniformBufferDescriptions.emplace_back();
+
+			buffer.Name = resource.name;
+			buffer.Size = compiler.get_declared_struct_size(bufferType);
+			buffer.BindingPoint = compiler.get_decoration(resource.id, spv::DecorationBinding);
+			buffer.DescriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+
+			// Get all members of the uniform buffer
+			for (int i = 0; i < memberCount; i++)
+			{
+				ShaderUniform uniform;
+				uniform.Name = compiler.get_member_name(bufferType.self, i);
+				uniform.Size = compiler.get_declared_struct_member_size(bufferType, i);
+				uniform.Type = Utils::GetUniformType(compiler.get_type(bufferType.member_types[i]), uniform.Size);
+				uniform.Offset = compiler.type_struct_member_offset(bufferType, i);
+
+				buffer.Uniforms.push_back(uniform);
+			}
+		}
+
+		// Get all sampled images in the shader
+		for (auto& resource : resources.sampled_images)
+		{
+			auto& type = compiler.get_type(resource.base_type_id);
+
+			ShaderResource& uniform = m_ShaderResourceDescriptions.emplace_back();
+
+			uniform.Name = resource.name;
+			uniform.BindingPoint = compiler.get_decoration(resource.id, spv::DecorationBinding);
+			uniform.DescriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+			uniform.Dimension = type.image.dim;
+			uniform.Type = Utils::GetResourceType(type, uniform.Dimension);
+		}
+
 	}
 
 	std::unordered_map<ShaderStage, std::string> Shader::SplitShaders(const std::string& path)

@@ -13,13 +13,15 @@ workspace "VulkanPlayground"
 outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
 
 IncludeDir = {}
-IncludeDir["Vulkan"] = VK_SDK_PATH .. "/include"
-IncludeDir["GLFW"]   = "VulkanPlayground/vendor/GLFW/include"
-IncludeDir["glm"]    = "VulkanPlayground/vendor/glm"
-IncludeDir["spdlog"] = "VulkanPlayground/vendor/spdlog/include"
-IncludeDir["VMA"]    = "VulkanPlayground/vendor/VMA/include"
+IncludeDir["VulkanSDK"]         = VK_SDK_PATH .. "/include"
+IncludeDir["GLFW"]              = "VulkanPlayground/vendor/GLFW/include"
+IncludeDir["glm"]               = "VulkanPlayground/vendor/glm"
+IncludeDir["spdlog"]            = "VulkanPlayground/vendor/spdlog/include"
+IncludeDir["VMA"]               = "VulkanPlayground/vendor/VMA/include"
+IncludeDir["SPIRVCross"]        = "VulkanPlayground/vendor/SPIRV-Cross"
 
 include "VulkanPlayground/vendor/GLFW"
+include "VulkanPlayground/vendor/SPIRV-Cross"
 
 project "VulkanPlayground"
 	location "VulkanPlayground"
@@ -35,26 +37,28 @@ project "VulkanPlayground"
 
 	files
 	{
-		"%{prj.name}/src/**.h",
 		"%{prj.name}/src/**.cpp",
+		"%{prj.name}/src/**.h",
 	}
 
 	includedirs
 	{
 		"%{prj.name}/src",
 		"%{prj.name}/vendor",
-		"%{IncludeDir.Vulkan}",
+		"%{IncludeDir.VulkanSDK}",
 		"%{IncludeDir.GLFW}",
 		"%{IncludeDir.glm}",
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.VMA}",
+		"%{IncludeDir.SPIRVCross}",
 	}
 
 	links 
 	{ 
-		'GLFW',
+		"GLFW",
+		"SPIRV-Cross",
 		VK_SDK_PATH .. "/Lib/vulkan-1.lib",
-		VK_SDK_PATH .. "/Lib/shaderc_shared.lib"
+		VK_SDK_PATH .. "/Lib/shaderc_shared.lib",
 	}
 
 	filter "system:windows"
