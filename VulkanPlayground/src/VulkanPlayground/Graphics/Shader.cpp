@@ -4,8 +4,8 @@
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include <shaderc/shaderc.hpp>
 
-#include "spirv_cross.hpp"
-#include "spirv_common.hpp"
+#include <spirv_cross.hpp>
+#include <spirv_common.hpp>
 
 namespace VKPlayground {
 
@@ -88,9 +88,15 @@ namespace VKPlayground {
 	Shader::~Shader()
 	{
 		VkDevice logicalDevice = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
+
 		for (auto shaderStageInfo : m_ShaderCreateInfo)
 		{
 			vkDestroyShaderModule(logicalDevice, shaderStageInfo.module, nullptr);
+		}
+
+		for (int i = 0; i < m_DescriptorSetLayouts.size(); i++)
+		{
+			vkDestroyDescriptorSetLayout(logicalDevice, m_DescriptorSetLayouts[i], nullptr);
 		}
 	}
 
@@ -101,6 +107,8 @@ namespace VKPlayground {
 
 		bool result = CompileShaders(m_ShaderSrc);
 		ASSERT(result, "Failed to initialize shader")
+
+		CreateDescriptorSetLayouts();
 	}
 
 	bool Shader::CompileShaders(const std::unordered_map<ShaderStage, std::string>& shaderSrc)
@@ -146,12 +154,12 @@ namespace VKPlayground {
 
 			// Save shader stage info
 			m_ShaderCreateInfo.push_back(shaderStageInfo);
-			ReflectShader(spirv, stage);
+			ReflectShader(spirv);
 		}
 	}
 
-	// TODO: Get info about push constants, other types of buffers and potentially vertex attributes
-	void Shader::ReflectShader(const std::vector<uint32_t>& data, ShaderStage stage)
+	// TODO: Get info about push constants, other types of buffers and shader stages
+	void Shader::ReflectShader(const std::vector<uint32_t>& data)
 	{
 		spirv_cross::Compiler compiler(data);
 		spirv_cross::ShaderResources resources = compiler.get_shader_resources();
@@ -162,12 +170,12 @@ namespace VKPlayground {
 			auto& bufferType = compiler.get_type(resource.base_type_id);
 			int memberCount = bufferType.member_types.size();
 
-			UniformBuffer& buffer = m_UniformBufferDescriptions.emplace_back();
+			UniformBufferDescription& buffer = m_UniformBufferDescriptions.emplace_back();
 
 			buffer.Name = resource.name;
 			buffer.Size = compiler.get_declared_struct_size(bufferType);
 			buffer.BindingPoint = compiler.get_decoration(resource.id, spv::DecorationBinding);
-			buffer.DescriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+			buffer.DescriptorSetIndex = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 
 			// Get all members of the uniform buffer
 			for (int i = 0; i < memberCount; i++)
@@ -191,11 +199,78 @@ namespace VKPlayground {
 
 			uniform.Name = resource.name;
 			uniform.BindingPoint = compiler.get_decoration(resource.id, spv::DecorationBinding);
-			uniform.DescriptorSet = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
+			uniform.DescriptorSetIndex = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
 			uniform.Dimension = type.image.dim;
 			uniform.Type = Utils::GetResourceType(type, uniform.Dimension);
 		}
 
+	}
+
+	// TODO: Get info a shader stages so we don't have to use VK_SHADER_STAGE_ALL
+	void Shader::CreateDescriptorSetLayouts()
+	{
+		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
+
+		std::unordered_map<int, std::vector<VkDescriptorSetLayoutBinding>> descriptorSetLayoutBindings;
+
+		// Create uniform buffer layout bindings
+		for (int i = 0; i < m_UniformBufferDescriptions.size(); i++)
+		{
+			VkDescriptorSetLayoutBinding layout{};
+
+			layout.binding = m_UniformBufferDescriptions[i].BindingPoint;
+			layout.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			layout.descriptorCount = 1;
+			layout.stageFlags = VK_SHADER_STAGE_ALL;
+			layout.pImmutableSamplers = nullptr; // Optional
+
+			descriptorSetLayoutBindings[m_UniformBufferDescriptions[i].DescriptorSetIndex].push_back(layout);
+		}
+
+		// Create resource layout bindings
+		for (int i = 0; i < m_ShaderResourceDescriptions.size(); i++)
+		{
+			VkDescriptorSetLayoutBinding layout{};
+
+			layout.binding = m_ShaderResourceDescriptions[i].BindingPoint;
+			layout.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			layout.descriptorCount = 1;
+			layout.stageFlags = VK_SHADER_STAGE_ALL;
+			layout.pImmutableSamplers = nullptr; // Optional
+
+			descriptorSetLayoutBindings[m_ShaderResourceDescriptions[i].DescriptorSetIndex].push_back(layout);
+		}
+
+		// Use layout bindings to create descriptor set layouts
+		int ID = 0;
+		for (auto const& [descriptorSetIndex, layouts] : descriptorSetLayoutBindings)
+		{
+			VkDescriptorSetLayoutCreateInfo layoutInfo{};
+			layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+			layoutInfo.bindingCount = layouts.size();
+			layoutInfo.pBindings = layouts.data();
+
+			for (int i = 0; i < m_UniformBufferDescriptions.size(); i++)
+			{
+				if (m_UniformBufferDescriptions[i].DescriptorSetIndex == descriptorSetIndex)
+				{
+					m_UniformBufferDescriptions[i].Index = ID;
+				}
+			}
+
+			for (int i = 0; i < m_ShaderResourceDescriptions.size(); i++)
+			{
+				if (m_ShaderResourceDescriptions[i].DescriptorSetIndex == descriptorSetIndex)
+				{
+					m_ShaderResourceDescriptions[i].Index = ID;
+				}
+			}
+
+			ID++;
+
+			VkDescriptorSetLayout& descriptorSetLayout = m_DescriptorSetLayouts.emplace_back();
+			VK_CHECK_RESULT(vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &descriptorSetLayout));
+		}
 	}
 
 	std::unordered_map<ShaderStage, std::string> Shader::SplitShaders(const std::string& path)

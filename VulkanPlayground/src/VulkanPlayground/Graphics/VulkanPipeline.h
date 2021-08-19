@@ -12,6 +12,7 @@ namespace VKPlayground {
 
 	public:
 		inline VkPipeline GetPipeline() { return m_Pipeline; }
+		inline VkPipelineLayout GetPipelineLayout() { return m_PipelineLayout; }
 
 	private:
 		void Init();
@@ -19,7 +20,6 @@ namespace VKPlayground {
 	private:
 		VkPipeline m_Pipeline = nullptr;
 		VkPipelineLayout m_PipelineLayout = nullptr;
-		std::vector<VkDescriptorSetLayout> m_DescriptorSets;
 
 		Ref<Shader> m_Shader;
 	};

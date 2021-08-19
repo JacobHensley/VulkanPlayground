@@ -10,36 +10,18 @@ vec3 colors[4] = vec3[](
     vec3(1.0, 1.0, 1.0)
 );
 
-layout(set = 0, binding = 0) uniform UniformBufferObject1{
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo1;
-
-layout(set = 2, binding = 1) uniform UniformBufferObject2{
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo2;
-
-layout(set = 2, binding = 2) uniform UniformBufferObject3{
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo3;
-
-layout(set = 3, binding = 3) uniform UniformBufferObject4{
-    mat4 model;
-    mat4 view;
-    mat4 proj;
-} ubo4;
+layout(set = 1, binding = 1) uniform ColorBuffer
+{
+    vec3 Color;
+} u_ColorBuffer;
 
 layout(location = 0) out vec3 fragColor;
 
 void main() 
 {
     gl_Position = vec4(a_Position, 1.0);
-    fragColor = colors[gl_VertexIndex];
+//    fragColor = colors[gl_VertexIndex];
+    fragColor = u_ColorBuffer.Color;
 }
 
 #Shader Fragment

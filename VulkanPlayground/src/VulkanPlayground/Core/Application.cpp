@@ -49,6 +49,7 @@ namespace VKPlayground {
 		{	
 			m_Window->Update();
 			m_SwapChain->BeginFrame();
+			m_Renderer->BeginFrame();
 			m_Renderer->Render();
 			m_SwapChain->Present();
 		}

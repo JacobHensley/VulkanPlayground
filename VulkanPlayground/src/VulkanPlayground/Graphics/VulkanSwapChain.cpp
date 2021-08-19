@@ -121,7 +121,7 @@ namespace VKPlayground {
 	void VulkanSwapChain::BeginFrame()
 	{
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
-		VK_CHECK_RESULT(vkAcquireNextImageKHR(device->GetLogicalDevice(), m_SwapChain, UINT64_MAX, m_PresentCompleteSemaphores[0], VK_NULL_HANDLE, &m_CurrentImageIndex));
+		VK_CHECK_RESULT(vkAcquireNextImageKHR(device->GetLogicalDevice(), m_SwapChain, UINT64_MAX, m_PresentCompleteSemaphores[m_CurrentBufferIndex], VK_NULL_HANDLE, &m_CurrentImageIndex));
 	}
 
 	void VulkanSwapChain::Present()
@@ -133,7 +133,7 @@ namespace VKPlayground {
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		submitInfo.waitSemaphoreCount = 1;
-		submitInfo.pWaitSemaphores = &m_PresentCompleteSemaphores[0];
+		submitInfo.pWaitSemaphores = &m_PresentCompleteSemaphores[m_CurrentBufferIndex];
 		submitInfo.pWaitDstStageMask = &waitStage;
 		submitInfo.commandBufferCount = 1;
 		submitInfo.pCommandBuffers = &m_CommandBuffers[m_CurrentBufferIndex];
@@ -389,6 +389,11 @@ namespace VKPlayground {
 		presentInfo.pResults = nullptr;
 
 		return vkQueuePresentKHR(queue, &presentInfo);
+	}
+
+	uint32_t VulkanSwapChain::GetFramesInFlight()
+	{
+		return MAX_FRAMES_IN_FLIGHT;
 	}
 
 }

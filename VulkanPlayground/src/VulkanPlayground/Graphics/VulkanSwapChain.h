@@ -30,6 +30,10 @@ namespace VKPlayground {
 		inline std::vector<VkCommandBuffer>& GetCommandBuffers() { return m_CommandBuffers; }
 		VkCommandBuffer GetCurrentCommandBuffer() const { return m_CommandBuffers[m_CurrentBufferIndex]; }
 	
+		inline uint32_t GetCurrentBufferIndex() { return m_CurrentBufferIndex; }
+		inline uint32_t GetCurrentFrameIndex() { return m_CurrentImageIndex; }
+		uint32_t GetFramesInFlight();
+
 		inline VkExtent2D GetExtent() { return m_Extent; }
 
 	private:
