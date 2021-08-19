@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "SimpleRenderer.h"
 #include "Application.h"
+#include "VulkanPlayground/Graphics/ImGUI/imgui_impl_vulkan.h"
 #include "VulkanPlayground/Graphics/VulkanDevice.h"
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include <vulkan/vulkan.h>
@@ -20,6 +21,12 @@ namespace VKPlayground {
 
 	SimpleRenderer::~SimpleRenderer()
 	{
+		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
+
+		for (int i = 0;i < m_DescriptorPools.size(); i++)
+		{
+			vkDestroyDescriptorPool(device, m_DescriptorPools[i], nullptr);
+		}
 	}
 
 	void SimpleRenderer::Init()
@@ -44,7 +51,7 @@ namespace VKPlayground {
 
 		// Create uniform buffer
 		ColorBuffer colorBuffer;
-		colorBuffer.Color = glm::vec3(1.0f, 0.2f, 0.2f);
+		colorBuffer.Color = glm::vec3(1.0f, 0.3f, 0.3f);
 
 		m_UniformBuffer = CreateRef<VulkanUniformBuffer>(&colorBuffer, sizeof(colorBuffer));
 
@@ -158,11 +165,13 @@ namespace VKPlayground {
 		VkDeviceSize offset = 0;
 		VkBuffer vertexBuffer = m_VertexBuffer->GetVulkanBuffer();
 		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
-
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipelineLayout(), 0, 1, m_DescriptorSets.data(), 0, nullptr);
-
 		vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
+
 		vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
+
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer, nullptr);
+
 		vkCmdEndRenderPass(commandBuffer);
 
 		// End command recording

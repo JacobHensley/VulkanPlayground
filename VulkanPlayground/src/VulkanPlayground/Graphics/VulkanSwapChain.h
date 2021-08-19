@@ -29,11 +29,14 @@ namespace VKPlayground {
 
 		inline std::vector<VkCommandBuffer>& GetCommandBuffers() { return m_CommandBuffers; }
 		VkCommandBuffer GetCurrentCommandBuffer() const { return m_CommandBuffers[m_CurrentBufferIndex]; }
-	
+		VkCommandPool GetCommandPool() const { return m_CommandPool; }
+
 		inline uint32_t GetCurrentBufferIndex() { return m_CurrentBufferIndex; }
 		inline uint32_t GetCurrentFrameIndex() { return m_CurrentImageIndex; }
 		uint32_t GetFramesInFlight();
 
+		inline uint32_t GetImageCount() { return m_ImageCount; }
+		inline uint32_t GetMinImageCount() { return m_MinImageCount; }
 		inline VkExtent2D GetExtent() { return m_Extent; }
 
 	private:
@@ -70,6 +73,7 @@ namespace VKPlayground {
 		VkPresentModeKHR m_PresentMode;
 		VkExtent2D m_Extent;
 		uint32_t m_ImageCount;
+		uint32_t m_MinImageCount;
 	};
 
 }

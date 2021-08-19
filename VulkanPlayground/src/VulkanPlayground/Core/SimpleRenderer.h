@@ -2,6 +2,7 @@
 #include "VulkanPlayground/Graphics/Shader.h"
 #include "VulkanPlayground/Graphics/VulkanPipeline.h"
 #include "VulkanPlayground/Graphics/VulkanBuffers.h"
+#include "VulkanPlayground/Graphics/ImGUI/ImGUILayer.h"
 
 namespace VKPlayground  {
 

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Application.h"
 #include "VulkanPlayground/Graphics/VulkanAllocator.h"
+#include <imgui.h>
 
 namespace VKPlayground {
 
@@ -16,11 +17,12 @@ namespace VKPlayground {
 	Application::~Application()
 	{
 		m_Renderer.reset();
+		m_ImGUILayer.reset();
 		m_SwapChain.reset();
 		VulkanAllocator::Shutdown();
 		m_Device.reset();
 		m_Window.reset();
-		m_VulkanInstance.reset();	
+		m_VulkanInstance.reset();
 	}
 
 	void Application::Init()
@@ -41,6 +43,8 @@ namespace VKPlayground {
 		VulkanAllocator::Init(m_Device);
 
 		m_Renderer = CreateRef<SimpleRenderer>();
+
+		m_ImGUILayer = CreateRef<ImGUILayer>();
 	}
 
 	void Application::Run()
@@ -48,6 +52,9 @@ namespace VKPlayground {
 		while (!m_Window->IsClosed())
 		{	
 			m_Window->Update();
+			m_ImGUILayer->BeginFrame();
+			ImGui::ShowDemoWindow();
+			m_ImGUILayer->EndFrame();
 			m_SwapChain->BeginFrame();
 			m_Renderer->BeginFrame();
 			m_Renderer->Render();

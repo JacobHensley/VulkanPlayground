@@ -164,12 +164,13 @@ namespace VKPlayground {
 		VkSurfaceFormatKHR selectedFormat = formats[0];
 		for (const auto& availableFormat : formats)
 		{
-			if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+			// NOTE: Vulkan Tutorial recommends VK_FORMAT_B8G8R8A8_SRGB claiming to give better color accuracy but Sascha willems and ImGUI use VK_FORMAT_B8G8R8A8_UNORM
+			if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM)
 			{
 				selectedFormat = availableFormat;
 			}
 		}
-
+		
 		// Select present mode
 		std::vector<VkPresentModeKHR> presentModes = supportDetails.PresentModes;
 		VkPresentModeKHR selectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
@@ -214,6 +215,7 @@ namespace VKPlayground {
 		m_PresentMode = selectedPresentMode;
 		m_Extent = selectedExtent;
 		m_ImageCount = imageCount;
+		m_MinImageCount = capabilities.minImageCount;
 	}
 
 	void VulkanSwapChain::CreateImageViews()

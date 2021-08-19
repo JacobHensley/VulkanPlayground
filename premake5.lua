@@ -19,9 +19,11 @@ IncludeDir["glm"]               = "VulkanPlayground/vendor/glm"
 IncludeDir["spdlog"]            = "VulkanPlayground/vendor/spdlog/include"
 IncludeDir["VMA"]               = "VulkanPlayground/vendor/VMA/include"
 IncludeDir["SPIRVCross"]        = "VulkanPlayground/vendor/SPIRV-Cross"
+IncludeDir["imgui"]             = "VulkanPlayground/vendor/imgui"
 
 include "VulkanPlayground/vendor/GLFW"
 include "VulkanPlayground/vendor/SPIRV-Cross"
+include "VulkanPlayground/vendor/imgui"
 
 project "VulkanPlayground"
 	location "VulkanPlayground"
@@ -51,12 +53,14 @@ project "VulkanPlayground"
 		"%{IncludeDir.spdlog}",
 		"%{IncludeDir.VMA}",
 		"%{IncludeDir.SPIRVCross}",
+		"%{IncludeDir.imgui}",
 	}
 
 	links 
 	{ 
 		"GLFW",
 		"SPIRV-Cross",
+		"imgui",
 		VK_SDK_PATH .. "/Lib/vulkan-1.lib",
 		VK_SDK_PATH .. "/Lib/shaderc_shared.lib",
 	}

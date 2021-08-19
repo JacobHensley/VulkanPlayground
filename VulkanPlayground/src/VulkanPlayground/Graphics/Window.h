@@ -22,6 +22,7 @@ namespace VKPlayground {
 		glm::vec2 GetFramebufferSize();
 		bool IsClosed();
 
+		inline GLFWwindow* GetWindowHandle() { return m_WindowHandle; }
 		inline VkSurfaceKHR GetVulkanSurface() { return m_VulkanSurface; }
 
 	private:

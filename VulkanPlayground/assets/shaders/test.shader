@@ -10,7 +10,7 @@ vec3 colors[4] = vec3[](
     vec3(1.0, 1.0, 1.0)
 );
 
-layout(set = 1, binding = 1) uniform ColorBuffer
+layout(set = 0, binding = 1) uniform ColorBuffer
 {
     vec3 Color;
 } u_ColorBuffer;

@@ -30,6 +30,8 @@ namespace VKPlayground {
 		std::string m_Name;
 		Ref<Window> m_Window;
 
+		Ref<ImGUILayer> m_ImGUILayer;
+
 		// TODO: Move to context class
 		Ref<VulkanInstance> m_VulkanInstance;
 		Ref<VulkanDevice> m_Device;
