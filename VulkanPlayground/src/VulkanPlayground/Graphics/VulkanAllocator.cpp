@@ -38,9 +38,30 @@ namespace VKPlayground {
 		return allocation;
 	}
 
+	VmaAllocation VulkanAllocator::AllocateImage(const VkImageCreateInfo& imageCreateInfo, VmaMemoryUsage usage, VkImage& outImage)
+	{
+		VmaAllocationCreateInfo allocCreateInfo = {};
+		allocCreateInfo.usage = usage;
+
+		VmaAllocation allocation;
+		vmaCreateImage(s_Data->Allocator, &imageCreateInfo, &allocCreateInfo, &outImage, &allocation, nullptr);
+
+		// Metrics
+		VmaAllocationInfo allocInfo;
+		vmaGetAllocationInfo(s_Data->Allocator, allocation, &allocInfo);
+		LOG_INFO("[{0}] - allocating image; size = {1}", m_Tag, allocInfo.size);
+
+		return allocation;
+	}
+
 	void VulkanAllocator::DestroyBuffer(VkBuffer buffer, VmaAllocation allocation)
 	{
 		vmaDestroyBuffer(s_Data->Allocator, buffer, allocation);
+	}
+
+	void VulkanAllocator::DestroyImage(VkImage image, VmaAllocation allocation)
+	{
+		vmaDestroyImage(s_Data->Allocator, image, allocation);
 	}
 
 	void VulkanAllocator::UnmapMemory(VmaAllocation allocation)

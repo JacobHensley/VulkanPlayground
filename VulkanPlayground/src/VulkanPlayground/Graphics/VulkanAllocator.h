@@ -13,7 +13,9 @@ namespace VKPlayground {
 	
 	public:
 		VmaAllocation AllocateBuffer(const VkBufferCreateInfo& bufferCreateInfo, VmaMemoryUsage usage, VkBuffer& outBuffer);
+		VmaAllocation AllocateImage(const VkImageCreateInfo& imageCreateInfo, VmaMemoryUsage usage, VkImage& outImage);
 		void DestroyBuffer(VkBuffer buffer, VmaAllocation allocation);
+		void DestroyImage(VkImage image, VmaAllocation allocation);
 
 		template<typename T>
 		T* MapMemory(VmaAllocation allocation)
