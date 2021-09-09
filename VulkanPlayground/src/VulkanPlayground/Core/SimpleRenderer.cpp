@@ -35,11 +35,16 @@ namespace VKPlayground {
 		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader);
 
 		// Create vertex buffer
-		glm::vec3 vertices[4] = {
-			{ -0.5f, -0.5f, 0.0f },
-			{  0.5f, -0.5f, 0.0f },
-			{  0.5f,  0.5f, 0.0f },
-			{ -0.5f,  0.5f, 0.0f }
+		struct Vertex
+		{
+			glm::vec3 Position;
+			glm::vec2 TexCoord;
+		};
+		Vertex vertices[4] = {
+			{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f } },
+			{ {  0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f } },
+			{ {  0.5f,  0.5f, 0.0f }, { 1.0f, 1.0f } },
+			{ { -0.5f,  0.5f, 0.0f }, { 0.0f, 1.0f } }
 		};
 
 		m_VertexBuffer = CreateRef<VulkanVertexBuffer>(&vertices, sizeof(vertices));
@@ -56,6 +61,9 @@ namespace VKPlayground {
 		m_UniformBuffer = CreateRef<VulkanUniformBuffer>(&colorBuffer, sizeof(colorBuffer));
 
 		CreateDescriptorPools();
+
+		// Resources
+		m_Texture = CreateRef<Texture2D>("assets/textures/ChernoLogo.png");
 	}
 
 	void SimpleRenderer::CreateDescriptorPools()
@@ -101,6 +109,7 @@ namespace VKPlayground {
 		m_DescriptorSets = AllocateDescriptorSet(m_Shader->GetDescriptorSetLayouts());
 
 		UniformBufferDescription uniformBuffer = m_Shader->GetUniformBufferDescriptions()[0];
+		ShaderResource texture = m_Shader->GetShaderResourceDescriptions()[0];
 
 		// Update correct descriptor set with data from uniform buffer 0
 		VkWriteDescriptorSet uniformBufferWriteDescriptor = {};
@@ -112,7 +121,20 @@ namespace VKPlayground {
 		uniformBufferWriteDescriptor.pBufferInfo = &m_UniformBuffer->getDescriptorBufferInfo();
 		uniformBufferWriteDescriptor.pImageInfo = nullptr;
 
+		// Update correct descriptor set with data from texture 0
+		VkWriteDescriptorSet textureWriteDescriptor = {};
+		textureWriteDescriptor.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		textureWriteDescriptor.descriptorCount = 1;
+		textureWriteDescriptor.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		textureWriteDescriptor.dstSet = m_DescriptorSets[texture.Index];
+		textureWriteDescriptor.dstBinding = texture.BindingPoint;
+		textureWriteDescriptor.pBufferInfo = nullptr;
+		textureWriteDescriptor.pImageInfo = &m_Texture->GetDescriptorImageInfo();
+
+		VkWriteDescriptorSet writeDescriptors[2] = { uniformBufferWriteDescriptor, textureWriteDescriptor };
+
 		vkUpdateDescriptorSets(device, 1, &uniformBufferWriteDescriptor, 0, nullptr);
+		vkUpdateDescriptorSets(device, 1, &textureWriteDescriptor, 0, nullptr);
 	}
 
 	void SimpleRenderer::Render()

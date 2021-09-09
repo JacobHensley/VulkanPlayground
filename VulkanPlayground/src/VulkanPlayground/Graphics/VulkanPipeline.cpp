@@ -27,7 +27,7 @@ namespace VKPlayground {
 
 	void VulkanPipeline::Init()
 	{
-		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(1);
+		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(2);
 
 		// Vertex 0: Position
 		vertexInputAttributes[0].binding = 0;
@@ -35,9 +35,14 @@ namespace VKPlayground {
 		vertexInputAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		vertexInputAttributes[0].offset = 0;
 
+		vertexInputAttributes[1].binding = 0;
+		vertexInputAttributes[1].location = 1;
+		vertexInputAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+		vertexInputAttributes[1].offset = 12;
+
 		VkVertexInputBindingDescription vertexInputBinding = {};
 		vertexInputBinding.binding = 0;
-		vertexInputBinding.stride = sizeof(glm::vec3); // Size of entire vertex
+		vertexInputBinding.stride = sizeof(glm::vec3) + sizeof(glm::vec2); // Size of entire vertex
 		vertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 		// Create vertex input
@@ -107,9 +112,9 @@ namespace VKPlayground {
 		// Color blending attachment
 		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-		colorBlendAttachment.blendEnable = VK_FALSE;
-		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
-		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;  // Optional
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA; // Optional
 		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;             // Optional
 		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;  // Optional
 		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional

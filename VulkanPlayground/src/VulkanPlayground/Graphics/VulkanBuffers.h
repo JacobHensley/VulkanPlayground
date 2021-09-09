@@ -51,4 +51,17 @@ namespace VKPlayground {
 		VkDescriptorBufferInfo m_DescriptorBufferInfo;
 	};
 
+	class VulkanStagingBuffer
+	{
+	public:
+		VulkanStagingBuffer(void* data, uint32_t size);
+		~VulkanStagingBuffer();
+
+	public:
+		VkBuffer GetVulkanBuffer() { return m_BufferInfo.Buffer; }
+
+	private:
+		BufferInfo m_BufferInfo;
+	};
+
 }
