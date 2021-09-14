@@ -1,9 +1,7 @@
 #pragma once
-
-#include <string>
 #include "VulkanPlayground/Core/VulkanTools.h"
-
 #include "VulkanAllocator.h"
+#include <string>
 
 namespace VKPlayground {
 

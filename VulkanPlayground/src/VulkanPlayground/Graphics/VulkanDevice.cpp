@@ -19,6 +19,7 @@ namespace VKPlayground {
 
 	VulkanDevice::~VulkanDevice()
 	{
+		vkDestroyCommandPool(m_LogicalDevice, m_CommandPool, nullptr);
 		vkDestroyDevice(m_LogicalDevice, nullptr);
 	}
 
@@ -72,7 +73,6 @@ namespace VKPlayground {
 		VkPhysicalDeviceFeatures deviceFeatures{};
 
 		// Logical device info
-		// TODO: Add device specific extensions to support older verions of Vulkan
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
@@ -87,6 +87,69 @@ namespace VKPlayground {
 		// Create queue handles
 		vkGetDeviceQueue(m_LogicalDevice, indices.GraphicsQueue.value(), 0, &m_GraphicsQueue);
 		vkGetDeviceQueue(m_LogicalDevice, indices.PresentQueue.value(), 0, &m_PresentQueue);
+
+		// Create command pool
+		VkCommandPoolCreateInfo poolInfo = {};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.queueFamilyIndex = indices.GraphicsQueue.value();
+		VK_CHECK_RESULT(vkCreateCommandPool(m_LogicalDevice, &poolInfo, nullptr, &m_CommandPool));
+	}
+
+	VkCommandBuffer VulkanDevice::CreateCommandBuffer(VkCommandBufferLevel level, bool begin)
+	{
+		// Create command buffer
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = m_CommandPool;
+		allocInfo.level = level;
+		allocInfo.commandBufferCount = 1;
+
+		VkCommandBuffer commandBuffer;
+		VK_CHECK_RESULT(vkAllocateCommandBuffers(m_LogicalDevice, &allocInfo, &commandBuffer));
+
+		// Begin command buffer if specified
+		if (begin)
+		{
+			VkCommandBufferBeginInfo commandBufferBeginInfo{};
+			commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+			VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &commandBufferBeginInfo));
+		}
+
+		return commandBuffer;
+	}
+
+	void VulkanDevice::FlushCommandBuffer(VkCommandBuffer commandBuffer, bool free)
+	{
+		ASSERT(commandBuffer != VK_NULL_HANDLE, "Command buffer is invalid");
+
+		// End command buffers
+		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
+	
+		// Submit info
+		VkSubmitInfo submitInfo = {};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+
+		// Create fence
+		VkFenceCreateInfo fenceCreateInfo{};
+		fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+		VkFence fence;
+		VK_CHECK_RESULT(vkCreateFence(m_LogicalDevice, &fenceCreateInfo, nullptr, &fence));
+
+		// Submit command buffer and signal fence when it's done
+		VK_CHECK_RESULT(vkQueueSubmit(m_GraphicsQueue, 1, &submitInfo, fence));
+		VK_CHECK_RESULT(vkWaitForFences(m_LogicalDevice, 1, &fence, VK_TRUE, UINT32_MAX));
+
+		// Destroy fence
+		vkDestroyFence(m_LogicalDevice, fence, nullptr);
+		
+		// Free command buffer if specified
+		if (free)
+		{
+			vkFreeCommandBuffers(m_LogicalDevice, m_CommandPool, 1, &commandBuffer);
+		}
 	}
 
 	bool VulkanDevice::IsDeviceSuitable(VkPhysicalDevice device)

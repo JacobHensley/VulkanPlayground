@@ -222,7 +222,7 @@ namespace VKPlayground {
 			layout.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			layout.descriptorCount = 1;
 			layout.stageFlags = VK_SHADER_STAGE_ALL;
-			layout.pImmutableSamplers = nullptr; // Optional
+			layout.pImmutableSamplers = nullptr;
 
 			descriptorSetLayoutBindings[m_UniformBufferDescriptions[i].DescriptorSetIndex].push_back(layout);
 		}
@@ -236,7 +236,7 @@ namespace VKPlayground {
 			layout.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			layout.descriptorCount = 1;
 			layout.stageFlags = VK_SHADER_STAGE_ALL;
-			layout.pImmutableSamplers = nullptr; // Optional
+			layout.pImmutableSamplers = nullptr;
 
 			descriptorSetLayoutBindings[m_ShaderResourceDescriptions[i].DescriptorSetIndex].push_back(layout);
 		}

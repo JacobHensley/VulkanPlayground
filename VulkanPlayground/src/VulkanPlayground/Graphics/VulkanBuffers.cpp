@@ -80,17 +80,17 @@ namespace VKPlayground {
 		allocator.DestroyBuffer(m_BufferInfo.Buffer, m_BufferInfo.Allocation);
 	}
 
-	VulkanStagingBuffer::VulkanStagingBuffer(void* data, uint32_t size)
+	VulkanBuffer::VulkanBuffer(void* data, uint32_t size, VkBufferUsageFlagBits bufferType, VmaMemoryUsage memoryType)
 	{
 		// Create buffer info
 		VkBufferCreateInfo vertexBufferCreateInfo = {};
 		vertexBufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		vertexBufferCreateInfo.size = size;
-		vertexBufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+		vertexBufferCreateInfo.usage = bufferType;
 
 		// Allocate memory
-		VulkanAllocator allocator("StagingBuffer");
-		m_BufferInfo.Allocation = allocator.AllocateBuffer(vertexBufferCreateInfo, VMA_MEMORY_USAGE_CPU_ONLY, m_BufferInfo.Buffer);
+		VulkanAllocator allocator("VulkanBuffer");
+		m_BufferInfo.Allocation = allocator.AllocateBuffer(vertexBufferCreateInfo, memoryType, m_BufferInfo.Buffer);
 
 		// Copy data into buffer
 		void* dstBuffer = allocator.MapMemory<void>(m_BufferInfo.Allocation);
@@ -98,9 +98,9 @@ namespace VKPlayground {
 		allocator.UnmapMemory(m_BufferInfo.Allocation);
 	}
 
-	VulkanStagingBuffer::~VulkanStagingBuffer()
+	VulkanBuffer::~VulkanBuffer()
 	{
-		VulkanAllocator allocator("StagingBuffer");
+		VulkanAllocator allocator("VulkanBuffer");
 		allocator.DestroyBuffer(m_BufferInfo.Buffer, m_BufferInfo.Allocation);
 	}
 

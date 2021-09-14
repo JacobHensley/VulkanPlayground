@@ -29,16 +29,18 @@ namespace VKPlayground {
 		~VulkanDevice();
 
 	public:
-		inline SwapChainSupportDetails GetSwapChainSupportDetails() { return m_SwapChainSupportDetails; }
-		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
+		inline VkPhysicalDevice GetPhysicalDevice() { return m_PhysicalDevice; };
+		inline VkDevice GetLogicalDevice() { return m_LogicalDevice; };
+
+		VkCommandBuffer CreateCommandBuffer(VkCommandBufferLevel level, bool begin);
+		void FlushCommandBuffer(VkCommandBuffer commandBuffer, bool free);
 
 		inline QueueFamilyIndices GetQueueIndices() { return m_QueueIndices; }
-		
 		inline VkQueue GetGraphicsQueue() { return m_GraphicsQueue; }
 		inline VkQueue GetPresentsQueue() { return m_PresentQueue; }
 
-		inline VkPhysicalDevice GetPhysicalDevice() { return m_PhysicalDevice; };
-		inline VkDevice GetLogicalDevice() { return m_LogicalDevice; };
+		inline SwapChainSupportDetails GetSwapChainSupportDetails() { return m_SwapChainSupportDetails; }
+		SwapChainSupportDetails QuerySwapChainSupport(VkPhysicalDevice device);
 
 	private:
 		void Init();
@@ -50,6 +52,8 @@ namespace VKPlayground {
 	private:
 		VkPhysicalDevice m_PhysicalDevice = nullptr;
 		VkDevice m_LogicalDevice = nullptr;
+
+		VkCommandPool m_CommandPool = nullptr;
 
 		VkQueue m_GraphicsQueue = nullptr;
 		VkQueue m_PresentQueue = nullptr;

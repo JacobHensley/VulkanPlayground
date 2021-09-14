@@ -10,6 +10,7 @@ namespace VKPlayground {
 		VmaAllocation Allocation = nullptr;
 	};
 
+	// Vertex Buffer
 	class VulkanVertexBuffer
 	{
 	public:
@@ -23,6 +24,7 @@ namespace VKPlayground {
 		BufferInfo m_BufferInfo;
 	};
 
+	// Index Buffer
 	class VulkanIndexBuffer
 	{
 	public:
@@ -36,6 +38,7 @@ namespace VKPlayground {
 		BufferInfo m_BufferInfo;
 	};
 
+	// Uniform Buffer
 	class VulkanUniformBuffer
 	{
 	public:
@@ -51,11 +54,12 @@ namespace VKPlayground {
 		VkDescriptorBufferInfo m_DescriptorBufferInfo;
 	};
 
-	class VulkanStagingBuffer
+	// Vulkan Buffer
+	class VulkanBuffer
 	{
 	public:
-		VulkanStagingBuffer(void* data, uint32_t size);
-		~VulkanStagingBuffer();
+		VulkanBuffer(void* data, uint32_t size, VkBufferUsageFlagBits bufferType, VmaMemoryUsage memoryType);
+		~VulkanBuffer();
 
 	public:
 		VkBuffer GetVulkanBuffer() { return m_BufferInfo.Buffer; }

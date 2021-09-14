@@ -20,6 +20,7 @@ IncludeDir["spdlog"]            = "VulkanPlayground/vendor/spdlog/include"
 IncludeDir["VMA"]               = "VulkanPlayground/vendor/VMA/include"
 IncludeDir["SPIRVCross"]        = "VulkanPlayground/vendor/SPIRV-Cross"
 IncludeDir["imgui"]             = "VulkanPlayground/vendor/imgui"
+IncludeDir["stb_image"]         = "VulkanPlayground/vendor/stb"
 
 include "VulkanPlayground/vendor/GLFW"
 include "VulkanPlayground/vendor/SPIRV-Cross"
@@ -41,6 +42,8 @@ project "VulkanPlayground"
 	{
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.h",
+		"%{prj.name}/vendor/stb/**.cpp",
+		"%{prj.name}/vendor/stb/**.h",
 	}
 
 	includedirs
@@ -54,6 +57,7 @@ project "VulkanPlayground"
 		"%{IncludeDir.VMA}",
 		"%{IncludeDir.SPIRVCross}",
 		"%{IncludeDir.imgui}",
+		"%{IncludeDir.stb_image}",
 	}
 
 	links 

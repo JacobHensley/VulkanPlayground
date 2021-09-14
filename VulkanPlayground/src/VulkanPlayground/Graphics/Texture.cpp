@@ -1,9 +1,7 @@
 #include "pch.h"
 #include "Texture.h"
-
-#include "../Core/Application.h"
-
-#include "stb/stb_image.h"
+#include "VulkanPlayground/Core/Application.h"
+#include <stb/stb_image.h>
 
 namespace VKPlayground {
 
@@ -22,7 +20,7 @@ namespace VKPlayground {
 		m_Height = height;
 
 		// Create staging buffer with image data
-		VulkanStagingBuffer stagingBuffer(m_LocalData, size);
+		VulkanBuffer stagingBuffer(m_LocalData, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY);
 
 		// Free CPU memory
 		stbi_image_free(m_LocalData);
@@ -45,17 +43,10 @@ namespace VKPlayground {
 		VulkanAllocator allocator("Texture2D");
 		m_ImageInfo.MemoryAlloc = allocator.AllocateImage(imageCreateInfo, VMA_MEMORY_USAGE_GPU_ONLY, m_ImageInfo.Image);
 
-		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
-		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
+		VkCommandBuffer commandBuffer = device->CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = 0;                  // Optional
-		beginInfo.pInheritanceInfo = nullptr; // Optional
-
-		VK_CHECK_RESULT(vkBeginCommandBuffer(swapChain->GetCurrentCommandBuffer(), &beginInfo));
-
-		// Range of image to copy
+		// Range of image to copy (only the first mip and first layer)
 		VkImageSubresourceRange range;
 		range.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		range.baseMipLevel = 0;
@@ -63,23 +54,23 @@ namespace VKPlayground {
 		range.baseArrayLayer = 0;
 		range.layerCount = 1;
 
-		// Image layout transition barrier
-		VkImageMemoryBarrier imageTransferBarrier = {};
-		imageTransferBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		imageTransferBarrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageTransferBarrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageTransferBarrier.image = m_ImageInfo.Image;
-		imageTransferBarrier.subresourceRange = range;
-		imageTransferBarrier.srcAccessMask = 0;
-		imageTransferBarrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		// Transfer image from undefined layout to destination optimal for copying into
+		InsertImageMemoryBarrier(
+			commandBuffer, 
+			m_ImageInfo.Image, 
+			0, 
+			VK_ACCESS_TRANSFER_WRITE_BIT, 
+			VK_IMAGE_LAYOUT_UNDEFINED, 
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			VK_PIPELINE_STAGE_TRANSFER_BIT, 
+			range);
 
-		vkCmdPipelineBarrier(swapChain->GetCurrentCommandBuffer(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageTransferBarrier);
-
+		// Define what part of the image to copy
 		VkBufferImageCopy copyRegion = {};
 		copyRegion.bufferOffset = 0;
 		copyRegion.bufferRowLength = 0;
 		copyRegion.bufferImageHeight = 0;
-
 		copyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		copyRegion.imageSubresource.mipLevel = 0;
 		copyRegion.imageSubresource.baseArrayLayer = 0;
@@ -88,44 +79,25 @@ namespace VKPlayground {
 		copyRegion.imageExtent.height = m_Height;
 		copyRegion.imageExtent.depth = 1;
 
-		//copy the buffer into the image
-		vkCmdCopyBufferToImage(swapChain->GetCurrentCommandBuffer(), stagingBuffer.GetVulkanBuffer(), m_ImageInfo.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+		// Copy CPU-GPU buffer into GPU-ONLY texture
+		vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.GetVulkanBuffer(), m_ImageInfo.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
-		VkImageMemoryBarrier imageShaderTransferBarrier = imageTransferBarrier;
+		// Transfer image from destination optimal layout to shader read optimal
+		InsertImageMemoryBarrier(
+			commandBuffer,
+			m_ImageInfo.Image,
+			VK_ACCESS_TRANSFER_WRITE_BIT,
+			VK_ACCESS_SHADER_READ_BIT,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			VK_PIPELINE_STAGE_TRANSFER_BIT,
+			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			range);
 
-		imageShaderTransferBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageShaderTransferBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		// Submit and free command buffer
+		device->FlushCommandBuffer(commandBuffer, true);
 
-		imageShaderTransferBarrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		imageShaderTransferBarrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		//barrier the image into the shader readable layout
-		vkCmdPipelineBarrier(swapChain->GetCurrentCommandBuffer(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageShaderTransferBarrier);
-
-		// End command recording
-		VK_CHECK_RESULT(vkEndCommandBuffer(swapChain->GetCurrentCommandBuffer()));
-
-		VkCommandBuffer commandBuffer = swapChain->GetCurrentCommandBuffer();
-
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.waitSemaphoreCount = 0;
-		submitInfo.pWaitSemaphores = nullptr;
-		submitInfo.pWaitDstStageMask = nullptr;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-		submitInfo.signalSemaphoreCount = 0;
-		submitInfo.pSignalSemaphores = nullptr;
-
-		VkFenceCreateInfo fenceInfo = {};
-		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-
-		VkFence fence;
-		VK_CHECK_RESULT(vkCreateFence(device, &fenceInfo, nullptr, &fence));
-
-		vkQueueSubmit(Application::GetApp().GetVulkanDevice()->GetGraphicsQueue(), 1, &submitInfo, fence);
-
-		// Create Image View
+		// Create image view (only the first mip and first layer)
 		VkImageViewCreateInfo imageViewCreateInfo = {};
 		imageViewCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 		imageViewCreateInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
@@ -139,8 +111,9 @@ namespace VKPlayground {
 		imageViewCreateInfo.subresourceRange.layerCount = 1;
 		imageViewCreateInfo.image = m_ImageInfo.Image;
 
-		VK_CHECK_RESULT(vkCreateImageView(device, &imageViewCreateInfo, nullptr, &m_ImageInfo.ImageView));
+		VK_CHECK_RESULT(vkCreateImageView(device->GetLogicalDevice(), &imageViewCreateInfo, nullptr, &m_ImageInfo.ImageView));
 
+		// Create sampler
 		VkSamplerCreateInfo samplerCreateInfo = {};
 		samplerCreateInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 		samplerCreateInfo.anisotropyEnable = VK_FALSE;
@@ -153,13 +126,12 @@ namespace VKPlayground {
 		samplerCreateInfo.maxLod = 20.0f;
 		samplerCreateInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_WHITE;
 
-		VK_CHECK_RESULT(vkCreateSampler(device, &samplerCreateInfo, nullptr, &m_ImageInfo.Sampler));
+		VK_CHECK_RESULT(vkCreateSampler(device->GetLogicalDevice(), &samplerCreateInfo, nullptr, &m_ImageInfo.Sampler));
 
+		// Create descriptor image info
 		m_DescriptorImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		m_DescriptorImageInfo.imageView = m_ImageInfo.ImageView;
 		m_DescriptorImageInfo.sampler = m_ImageInfo.Sampler;
-
-		vkWaitForFences(device, 1, &fence, VK_TRUE, UINT32_MAX);
 	}
 
 	Texture2D::~Texture2D()

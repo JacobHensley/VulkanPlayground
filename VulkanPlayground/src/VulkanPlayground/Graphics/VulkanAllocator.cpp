@@ -41,11 +41,10 @@ namespace VKPlayground {
 	VmaAllocation VulkanAllocator::AllocateImage(const VkImageCreateInfo& imageCreateInfo, VmaMemoryUsage usage, VkImage& outImage)
 	{
 		VmaAllocationCreateInfo allocCreateInfo = {};
-	//	allocCreateInfo.usage = usage;
-		allocCreateInfo.requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+		allocCreateInfo.usage = usage;
 
 		VmaAllocation allocation;
-		VkResult result = vmaCreateImage(s_Data->Allocator, &imageCreateInfo, &allocCreateInfo, &outImage, &allocation, nullptr);
+		vmaCreateImage(s_Data->Allocator, &imageCreateInfo, &allocCreateInfo, &outImage, &allocation, nullptr);
 
 		// Metrics
 		VmaAllocationInfo allocInfo;
