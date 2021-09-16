@@ -4,6 +4,7 @@
 #include "VulkanPlayground/Graphics/VulkanBuffers.h"
 #include "VulkanPlayground/Graphics/ImGUI/ImGUILayer.h"
 #include "VulkanPlayground/Graphics/Texture.h"
+#include "VulkanPlayground/Graphics/VulkanFramebuffer.h"
 
 namespace VKPlayground  {
 
@@ -31,6 +32,7 @@ namespace VKPlayground  {
 		Ref<VulkanUniformBuffer> m_UniformBuffer;
 		
 		Ref<Texture2D> m_Texture;
+		Ref<VulkanFramebuffer> m_Framebuffer;
 
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		std::vector<VkDescriptorPool> m_DescriptorPools;

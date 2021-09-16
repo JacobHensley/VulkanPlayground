@@ -19,98 +19,98 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanDebugCallback(VkDebugUtilsMessageSev
     return VK_FALSE;
 }
 
-namespace Utils {
+namespace VKPlayground {
 
-    static bool CheckValidationSupport()
-    {
-        // Get layer info
-        uint32_t layerCount;
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-        std::vector<VkLayerProperties> availableLayers(layerCount);
-        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+    namespace Utils {
 
-        // Check to ensure all validation layers are in availableLayers
-        for (const char* layerName : s_ValidationLayers)
+        static bool CheckValidationSupport()
         {
-            bool found = false;
+            // Get layer info
+            uint32_t layerCount;
+            vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+            std::vector<VkLayerProperties> availableLayers(layerCount);
+            vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-            for (const auto& layerProperties : availableLayers)
+            // Check to ensure all validation layers are in availableLayers
+            for (const char* layerName : s_ValidationLayers)
             {
-                if (strcmp(layerName, layerProperties.layerName) == 0)
+                bool found = false;
+
+                for (const auto& layerProperties : availableLayers)
                 {
-                    found = true;
-                    break;
+                    if (strcmp(layerName, layerProperties.layerName) == 0)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                {
+                    return false;
                 }
             }
 
-            if (!found)
+            return true;
+        }
+
+        static std::vector<const char*> GetRequiredExtensions()
+        {
+            // GLFW window extensions
+            uint32_t glfwExtensionCount = 0;
+            const char** glfwExtensions;
+            glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+            std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
+
+            if (s_EnableValidationLayers) {
+                extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+            }
+
+            return extensions;
+        }
+
+        static void PrintAvailableExtensions()
+        {
+            // Get extension info
+            uint32_t extensionCount = 0;
+            vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
+            std::vector<VkExtensionProperties> extensions(extensionCount);
+            vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
+
+            // Print available extensions
+            LOG_INFO("Available Vulkan extensions: {0}", extensionCount);
+            for (const auto& extension : extensions)
             {
-                return false;
+                LOG_INFO("    {0}", extension.extensionName);
             }
         }
 
-        return true;
-    }
-
-    static std::vector<const char*> GetRequiredExtensions()
-    {
-        // GLFW window extensions
-        uint32_t glfwExtensionCount = 0;
-        const char** glfwExtensions;
-        glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-        std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-        if (s_EnableValidationLayers) {
-            extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-        }
-
-        return extensions;
-    }
-
-    static void PrintAvailableExtensions()
-    {
-        // Get extension info
-        uint32_t extensionCount = 0;
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);
-        std::vector<VkExtensionProperties> extensions(extensionCount);
-        vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data());
-
-        // Print available extensions
-        LOG_INFO("Available Vulkan extensions: {0}", extensionCount);
-        for (const auto& extension : extensions)
+        static void PrintAvailableLayers()
         {
-            LOG_INFO("    {0}", extension.extensionName);
+            // Get layer info
+            uint32_t layerCount;
+            vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
+            std::vector<VkLayerProperties> availableLayers(layerCount);
+            vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
+
+            // Print available layers
+            LOG_INFO("Available Vulkan layers: {0}", layerCount);
+            for (const auto& layer : availableLayers)
+            {
+                LOG_INFO("    {0}", layer.layerName);
+            }
         }
-    }
 
-    static void PrintAvailableLayers()
-    {
-        // Get layer info
-        uint32_t layerCount;
-        vkEnumerateInstanceLayerProperties(&layerCount, nullptr);
-        std::vector<VkLayerProperties> availableLayers(layerCount);
-        vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
-
-        // Print available layers
-        LOG_INFO("Available Vulkan layers: {0}", layerCount);
-        for (const auto& layer : availableLayers)
+        static void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
         {
-            LOG_INFO("    {0}", layer.layerName);
+            createInfo = {};
+            createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+            createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+            createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+            createInfo.pfnUserCallback = VulkanDebugCallback;
         }
     }
-
-    static void PopulateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo)
-    {
-        createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        createInfo.pfnUserCallback = VulkanDebugCallback;
-    }
-}
-
-namespace VKPlayground {
 
     VulkanInstance::VulkanInstance(const std::string& name)
         : m_Name(name)

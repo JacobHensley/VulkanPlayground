@@ -93,9 +93,12 @@ namespace VKPlayground {
 		m_BufferInfo.Allocation = allocator.AllocateBuffer(vertexBufferCreateInfo, memoryType, m_BufferInfo.Buffer);
 
 		// Copy data into buffer
-		void* dstBuffer = allocator.MapMemory<void>(m_BufferInfo.Allocation);
-		memcpy(dstBuffer, data, size);
-		allocator.UnmapMemory(m_BufferInfo.Allocation);
+		if (data != nullptr)
+		{
+			void* dstBuffer = allocator.MapMemory<void>(m_BufferInfo.Allocation);
+			memcpy(dstBuffer, data, size);
+			allocator.UnmapMemory(m_BufferInfo.Allocation);
+		}
 	}
 
 	VulkanBuffer::~VulkanBuffer()

@@ -28,7 +28,7 @@ namespace VKPlayground {
 		allocCreateInfo.usage = usage;
 
 		VmaAllocation allocation;
-		vmaCreateBuffer(s_Data->Allocator, &bufferCreateInfo, &allocCreateInfo, &outBuffer, &allocation, nullptr);
+		VkResult result = vmaCreateBuffer(s_Data->Allocator, &bufferCreateInfo, &allocCreateInfo, &outBuffer, &allocation, nullptr);
 
 		// Metrics
 		VmaAllocationInfo allocInfo;

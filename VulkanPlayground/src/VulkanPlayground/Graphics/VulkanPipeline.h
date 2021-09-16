@@ -7,7 +7,7 @@ namespace VKPlayground {
 	class VulkanPipeline
 	{
 	public:
-		VulkanPipeline(Ref<Shader> shader);
+		VulkanPipeline(Ref<Shader> shader, VkRenderPass renderPass);
 		~VulkanPipeline();
 
 	public:
@@ -22,6 +22,7 @@ namespace VKPlayground {
 		VkPipelineLayout m_PipelineLayout = nullptr;
 
 		Ref<Shader> m_Shader;
+		VkRenderPass m_RenderPass;
 	};
 
 }

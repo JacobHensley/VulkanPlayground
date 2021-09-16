@@ -10,8 +10,8 @@ namespace VKPlayground {
 		VK_DYNAMIC_STATE_LINE_WIDTH
 	};
 
-	VulkanPipeline::VulkanPipeline(Ref<Shader> shader)
-		: m_Shader(shader)
+	VulkanPipeline::VulkanPipeline(Ref<Shader> shader, VkRenderPass renderPass)
+		: m_Shader(shader), m_RenderPass(renderPass)
 	{
 		Init();
 		LOG_INFO("Initialized Vulkan pipeline");
@@ -151,7 +151,8 @@ namespace VKPlayground {
 		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
 
 		const std::vector<VkPipelineShaderStageCreateInfo>& shaderCreateInfo = m_Shader->GetShaderCreateInfo();
-		VkRenderPass renderPass = swapChain->GetRenderPass();
+	//	VkRenderPass renderPass = swapChain->GetRenderPass();
+		VkRenderPass renderPass = m_RenderPass;
 
 		// Create pipeline
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
