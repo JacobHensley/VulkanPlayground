@@ -6,6 +6,8 @@
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include <vulkan/vulkan.h>
 
+#include "tinygltf/tiny_gltf.h"
+
 namespace VKPlayground {
 
 	struct ColorBuffer
@@ -31,6 +33,15 @@ namespace VKPlayground {
 
 	void SimpleRenderer::Init()
 	{
+		// Test
+		tinygltf::Model model;
+		tinygltf::TinyGLTF loader;
+		std::string err;
+		std::string warn;
+		bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, "assets/models/Cube.glb");
+
+		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+
 		FramebufferSpecification fbSpec = {};
 		fbSpec.Width = 1280;
 		fbSpec.Height = 720;
@@ -38,7 +49,7 @@ namespace VKPlayground {
 		m_Framebuffer = CreateRef<VulkanFramebuffer>(fbSpec);
 
 		m_Shader = CreateRef<Shader>("assets/shaders/test.shader");
-		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader, m_Framebuffer->GetRenderPass());
+		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader, swapChain->GetRenderPass());
 
 		// Create vertex buffer
 		struct Vertex
@@ -164,28 +175,16 @@ namespace VKPlayground {
 			dir *= -1.0f;
 		if (r < 0.0f)
 			dir *= -1.0f;
-		VkClearValue clearColors[] = { {{r, 0.1f, 0.8f, 1.0f}}, {{r, 0.1f, 0.8f, 1.0f}} };
+		VkClearValue clearColors[] = { {{r, 0.1f, 0.8f, 1.0f}}, {{1.0f, 1.0f, 1.0f, 1.0f}} };
 
 		// Begin render pass
-	/*	VkRenderPassBeginInfo renderPassInfo{};
+		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		renderPassInfo.renderPass = swapChain->GetRenderPass();
 		renderPassInfo.framebuffer = swapChain->GetCurrentFramebuffer();
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChain->GetExtent();
 		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
-
-		// Record commands
-		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE); */
-		VkRenderPassBeginInfo renderPassInfo{};
-		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = m_Framebuffer->GetRenderPass();
-		renderPassInfo.framebuffer = m_Framebuffer->GetFramebuffer();
-		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent.width  = m_Framebuffer->GetWidth();
-		renderPassInfo.renderArea.extent.height = m_Framebuffer->GetHeight();
-		renderPassInfo.clearValueCount = 2;
 		renderPassInfo.pClearValues = clearColors;
 
 		// Record commands
