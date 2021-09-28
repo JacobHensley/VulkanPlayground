@@ -3,7 +3,7 @@
 #include "VulkanPlayground/Core/Application.h"
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include "VulkanPlayground/Graphics/ImGUI/imgui_impl_glfw.h"
-#include "VulkanPlayground/Graphics/ImGUI/imgui_impl_vulkan.h"
+#include "VulkanPlayground/Graphics/ImGUI/impl_vulkan_with_textures.h"
 
 namespace VKPlayground {
 

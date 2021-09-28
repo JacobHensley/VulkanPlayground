@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "SimpleRenderer.h"
 #include "Application.h"
-#include "VulkanPlayground/Graphics/ImGUI/imgui_impl_vulkan.h"
+#include "VulkanPlayground/Graphics/ImGUI/impl_vulkan_with_textures.h"
 #include "VulkanPlayground/Graphics/VulkanDevice.h"
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include <vulkan/vulkan.h>
@@ -15,8 +15,12 @@ namespace VKPlayground {
 		glm::vec3 Color;
 	};
 
+	static SimpleRenderer* s_Instance = nullptr;
+
 	SimpleRenderer::SimpleRenderer()
 	{
+		s_Instance = this;
+
 		Init();
 		LOG_INFO("Initialized renderer");
 	}
@@ -33,20 +37,7 @@ namespace VKPlayground {
 
 	void SimpleRenderer::Init()
 	{
-		// Test
-		tinygltf::Model model;
-		tinygltf::TinyGLTF loader;
-		std::string err;
-		std::string warn;
-		bool ret = loader.LoadBinaryFromFile(&model, &err, &warn, "assets/models/Cube.glb");
-
 		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
-
-		FramebufferSpecification fbSpec = {};
-		fbSpec.Width = 1280;
-		fbSpec.Height = 720;
-		fbSpec.AttachmentFormats = { VK_FORMAT_B8G8R8A8_UNORM };
-		m_Framebuffer = CreateRef<VulkanFramebuffer>(fbSpec);
 
 		m_Shader = CreateRef<Shader>("assets/shaders/test.shader");
 		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader, swapChain->GetRenderPass());
@@ -57,6 +48,7 @@ namespace VKPlayground {
 			glm::vec3 Position;
 			glm::vec2 TexCoord;
 		};
+
 		Vertex vertices[4] = {
 			{ { -0.5f, -0.5f, 0.0f }, { 0.0f, 0.0f } },
 			{ {  0.5f, -0.5f, 0.0f }, { 1.0f, 0.0f } },
@@ -123,8 +115,9 @@ namespace VKPlayground {
 
 		// Allocate all descriptor sets
 		const std::vector<VkDescriptorSetLayout>& layouts = m_Shader->GetDescriptorSetLayouts();
-		m_DescriptorSets = AllocateDescriptorSet(m_Shader->GetDescriptorSetLayouts());
+		m_DescriptorSets = AllocateDescriptorSets(m_Shader->GetDescriptorSetLayouts());
 
+		// Write descriptors
 		UniformBufferDescription uniformBuffer = m_Shader->GetUniformBufferDescriptions()[0];
 		ShaderResource texture = m_Shader->GetShaderResourceDescriptions()[0];
 
@@ -150,22 +143,28 @@ namespace VKPlayground {
 
 		VkWriteDescriptorSet writeDescriptors[2] = { uniformBufferWriteDescriptor, textureWriteDescriptor };
 
-		vkUpdateDescriptorSets(device, 1, &uniformBufferWriteDescriptor, 0, nullptr);
-		vkUpdateDescriptorSets(device, 1, &textureWriteDescriptor, 0, nullptr);
-	}
+		vkUpdateDescriptorSets(device, 2, writeDescriptors, 0, nullptr);
 
-	void SimpleRenderer::Render()
-	{
-		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
-
-		VkCommandBuffer commandBuffer = swapChain->GetCurrentCommandBuffer();
+		// Start command buffer
+		m_ActiveCommandBuffer = swapChain->GetCurrentCommandBuffer();
 
 		VkCommandBufferBeginInfo beginInfo{};
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = 0;                  // Optional
 		beginInfo.pInheritanceInfo = nullptr; // Optional
 
-		VK_CHECK_RESULT(vkBeginCommandBuffer(commandBuffer, &beginInfo));
+		VK_CHECK_RESULT(vkBeginCommandBuffer(m_ActiveCommandBuffer, &beginInfo));
+	}
+
+	void SimpleRenderer::EndFrame()
+	{
+		// End command recording
+		VK_CHECK_RESULT(vkEndCommandBuffer(m_ActiveCommandBuffer));
+	}
+
+	void SimpleRenderer::BeginRenderPass()
+	{
+		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
 
 		// Set clear color
 		static float r = 0.0f;
@@ -175,7 +174,10 @@ namespace VKPlayground {
 			dir *= -1.0f;
 		if (r < 0.0f)
 			dir *= -1.0f;
-		VkClearValue clearColors[] = { {{r, 0.1f, 0.8f, 1.0f}}, {{1.0f, 1.0f, 1.0f, 1.0f}} };
+
+		VkClearValue clearColor[2];
+		clearColor[0].color = { r, 0.1f, 0.8f, 1.0f };
+		clearColor[1].depthStencil = { 1.0f, 0 };
 
 		// Begin render pass
 		VkRenderPassBeginInfo renderPassInfo{};
@@ -185,11 +187,7 @@ namespace VKPlayground {
 		renderPassInfo.renderArea.offset = { 0, 0 };
 		renderPassInfo.renderArea.extent = swapChain->GetExtent();
 		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = clearColors;
-
-		// Record commands
-		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipeline());
+		renderPassInfo.pClearValues = clearColor;
 
 		// Update viewport
 		VkViewport viewport{};
@@ -199,25 +197,48 @@ namespace VKPlayground {
 		viewport.height = -(float)swapChain->GetExtent().height;
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
-		vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+		vkCmdSetViewport(m_ActiveCommandBuffer, 0, 1, &viewport);
+
+		vkCmdBeginRenderPass(m_ActiveCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	void SimpleRenderer::EndRenderPass()
+	{
+		vkCmdEndRenderPass(m_ActiveCommandBuffer);
+	}
+
+	void SimpleRenderer::Render()
+	{
+		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+
+		vkCmdBindPipeline(m_ActiveCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipeline());
 
 		VkDeviceSize offset = 0;
 		VkBuffer vertexBuffer = m_VertexBuffer->GetVulkanBuffer();
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, &offset);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipelineLayout(), 0, 1, m_DescriptorSets.data(), 0, nullptr);
-		vkCmdBindIndexBuffer(commandBuffer, m_IndexBuffer->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindVertexBuffers(m_ActiveCommandBuffer, 0, 1, &vertexBuffer, &offset);
+		vkCmdBindIndexBuffer(m_ActiveCommandBuffer, m_IndexBuffer->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
-		vkCmdDrawIndexed(commandBuffer, 6, 1, 0, 0, 0);
-
-		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer, nullptr);
-
-		vkCmdEndRenderPass(commandBuffer);
-
-		// End command recording
-		VK_CHECK_RESULT(vkEndCommandBuffer(commandBuffer));
+		vkCmdBindDescriptorSets(m_ActiveCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipelineLayout(), 0, 1, m_DescriptorSets.data(), 0, nullptr);
+		vkCmdDrawIndexed(m_ActiveCommandBuffer, 6, 1, 0, 0, 0);
 	}
 
-	std::vector<VkDescriptorSet> SimpleRenderer::AllocateDescriptorSet(const std::vector<VkDescriptorSetLayout>& layouts)
+	void SimpleRenderer::RenderUI()
+	{
+		ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), m_ActiveCommandBuffer);
+	}
+
+	void SimpleRenderer::OnImGuiRender()
+	{
+		ImGui::Begin("Example");
+		ImGui::Button("Hello");
+
+		auto& descriptorInfo = m_Texture->GetDescriptorImageInfo();
+		ImTextureID imTex = ImGui_ImplVulkan_AddTexture(descriptorInfo.sampler, descriptorInfo.imageView, descriptorInfo.imageLayout);
+		ImGui::Image(imTex, { 512, 512 }, ImVec2(0, 1), ImVec2(1, 0));
+		ImGui::End();
+	}
+
+	std::vector<VkDescriptorSet> SimpleRenderer::AllocateDescriptorSets(const std::vector<VkDescriptorSetLayout>& layouts)
 	{
 		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
 		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
@@ -234,6 +255,19 @@ namespace VKPlayground {
 		result.resize(layouts.size());
 
 		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, result.data()));
+		return result;
+	}
+
+	VkDescriptorSet SimpleRenderer::AllocateDescriptorSet(VkDescriptorSetAllocateInfo allocInfo)
+	{
+		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
+		uint32_t frameIndex = swapChain->GetCurrentBufferIndex();
+
+		allocInfo.descriptorPool = s_Instance->m_DescriptorPools[frameIndex];
+
+		VkDescriptorSet result;
+		VK_CHECK_RESULT(vkAllocateDescriptorSets(device, &allocInfo, &result));
 		return result;
 	}
 

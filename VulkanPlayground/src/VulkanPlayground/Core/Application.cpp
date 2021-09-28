@@ -52,12 +52,29 @@ namespace VKPlayground {
 		while (!m_Window->IsClosed())
 		{	
 			m_Window->Update();
-			m_ImGUILayer->BeginFrame();
-			ImGui::ShowDemoWindow();
-			m_ImGUILayer->EndFrame();
 			m_SwapChain->BeginFrame();
 			m_Renderer->BeginFrame();
-			m_Renderer->Render();
+
+			// OnUpdate function
+			{
+				// ImGui
+				m_ImGUILayer->BeginFrame();
+				m_Renderer->OnImGuiRender();
+				m_ImGUILayer->EndFrame();
+			}
+
+			// OnRenderFunction
+			{
+				m_Renderer->BeginRenderPass();
+
+				// Render
+				m_Renderer->Render();
+				m_Renderer->RenderUI();
+
+				m_Renderer->EndRenderPass();
+			}
+
+			m_Renderer->EndFrame();
 			m_SwapChain->Present();
 		}
 

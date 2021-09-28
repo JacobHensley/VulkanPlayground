@@ -16,12 +16,22 @@ namespace VKPlayground  {
 
 	public:
 		void BeginFrame();
+		void EndFrame();
+
+		void BeginRenderPass();
+		void EndRenderPass();
+
 		void Render();
+		void RenderUI();
+
+		void OnImGuiRender();
+
+		static VkDescriptorSet AllocateDescriptorSet(VkDescriptorSetAllocateInfo allocInfo);
 
 	private:
 		void Init();
 		void CreateDescriptorPools();
-		std::vector<VkDescriptorSet> AllocateDescriptorSet(const std::vector<VkDescriptorSetLayout>& layouts);
+		std::vector<VkDescriptorSet> AllocateDescriptorSets(const std::vector<VkDescriptorSetLayout>& layouts);
 
 	private:
 		Ref<Shader> m_Shader;
@@ -33,6 +43,8 @@ namespace VKPlayground  {
 		
 		Ref<Texture2D> m_Texture;
 		Ref<VulkanFramebuffer> m_Framebuffer;
+
+		VkCommandBuffer m_ActiveCommandBuffer = nullptr;
 
 		std::vector<VkDescriptorSet> m_DescriptorSets;
 		std::vector<VkDescriptorPool> m_DescriptorPools;

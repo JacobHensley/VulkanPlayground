@@ -42,8 +42,13 @@ project "VulkanPlayground"
 	{
 		"%{prj.name}/src/**.cpp",
 		"%{prj.name}/src/**.h",
+		-- STB
 		"%{prj.name}/vendor/stb/**.cpp",
 		"%{prj.name}/vendor/stb/**.h",
+		-- TinyGltf
+		"%{prj.name}/vendor/tinygltf/**.cpp",
+		"%{prj.name}/vendor/tinygltf/**.hpp",
+		"%{prj.name}/vendor/tinygltf/**.h",
 	}
 
 	includedirs
