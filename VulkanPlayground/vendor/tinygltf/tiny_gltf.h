@@ -1700,6 +1700,7 @@ void JsonParse(JsonDocument &doc, const char *str, size_t length,
 
 #ifdef __APPLE__
 #include "TargetConditionals.h"
+#include "..\..\src\VulkanPlayground\Graphics\Mesh.h"
 #endif
 
 #ifdef __clang__

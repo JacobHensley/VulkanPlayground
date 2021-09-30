@@ -27,7 +27,7 @@ namespace VKPlayground {
 
 	private:
 		void Init();
-
+	
 	private:
 		const std::string m_Name;
 		int m_Width;

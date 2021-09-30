@@ -27,7 +27,7 @@ namespace VKPlayground {
 
 	void VulkanPipeline::Init()
 	{
-		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(2);
+		std::vector<VkVertexInputAttributeDescription> vertexInputAttributes(4);
 
 		// Vertex 0: Position
 		vertexInputAttributes[0].binding = 0;
@@ -35,14 +35,27 @@ namespace VKPlayground {
 		vertexInputAttributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
 		vertexInputAttributes[0].offset = 0;
 
+		// Vertex 0: Normal
 		vertexInputAttributes[1].binding = 0;
 		vertexInputAttributes[1].location = 1;
 		vertexInputAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
 		vertexInputAttributes[1].offset = 12;
 
+		// Vertex 0: Tangent
+		vertexInputAttributes[2].binding = 0;
+		vertexInputAttributes[2].location = 2;
+		vertexInputAttributes[2].format = VK_FORMAT_R32G32_SFLOAT;
+		vertexInputAttributes[2].offset = 24;
+
+		// Vertex 0: TextureCoords
+		vertexInputAttributes[3].binding = 0;
+		vertexInputAttributes[3].location = 2;
+		vertexInputAttributes[3].format = VK_FORMAT_R32G32_SFLOAT;
+		vertexInputAttributes[3].offset = 36;
+
 		VkVertexInputBindingDescription vertexInputBinding = {};
 		vertexInputBinding.binding = 0;
-		vertexInputBinding.stride = sizeof(glm::vec3) + sizeof(glm::vec2); // Size of entire vertex
+		vertexInputBinding.stride = sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec3) + sizeof(glm::vec2); // Size of entire vertex
 		vertexInputBinding.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 		// Create vertex input
@@ -138,6 +151,12 @@ namespace VKPlayground {
 		dynamicState.dynamicStateCount = 2;
 		dynamicState.pDynamicStates = s_DynamicStates;
 
+		//Set push constants
+		VkPushConstantRange pushConstantRange;
+		pushConstantRange.offset = 0;
+		pushConstantRange.size = 128; // TODO: Get this info from device
+		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+
 		// Set pipeline layout
 		const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts = m_Shader->GetDescriptorSetLayouts();
 
@@ -145,8 +164,8 @@ namespace VKPlayground {
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
 		pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-		pipelineLayoutInfo.pushConstantRangeCount = 0;    // Optional
-		pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
+		pipelineLayoutInfo.pushConstantRangeCount = 1;    // Optional
+		pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange; // Optional
 
 		VK_CHECK_RESULT(vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &m_PipelineLayout));
 

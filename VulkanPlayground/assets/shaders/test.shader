@@ -2,28 +2,26 @@
 #version 450
 
 layout(location = 0) in vec3 a_Position;
-layout(location = 1) in vec2 a_TexCoord;
+layout(location = 1) in vec3 a_Normal;
+layout(location = 2) in vec3 a_Tangent;
+layout(location = 3) in vec2 a_TexCoord;
 
-vec3 colors[4] = vec3[](
-    vec3(1.0, 0.0, 0.0),
-    vec3(0.0, 1.0, 0.0),
-    vec3(0.0, 0.0, 1.0),
-    vec3(1.0, 1.0, 1.0)
-);
-
-layout(set = 0, binding = 1) uniform ColorBuffer
+layout(set = 0, binding = 1) uniform CameraBuffer
 {
-    vec3 Color;
-} u_ColorBuffer;
+    mat4 View;
+    mat4 Proj;
+} u_CameraBuffer;
 
-layout(location = 0) out vec3 fragColor;
+layout(push_constant) uniform constants
+{
+    mat4 transform;
+} PushConstants;
+
 layout(location = 1) out vec2 v_TexCoord;
 
 void main() 
 {
-    gl_Position = vec4(a_Position, 1.0);
-//    fragColor = colors[gl_VertexIndex];
-    fragColor = u_ColorBuffer.Color;
+    gl_Position = u_CameraBuffer.Proj * u_CameraBuffer.View * vec4(a_Position, 1.0);
     v_TexCoord = a_TexCoord;
 }
 
@@ -39,11 +37,8 @@ layout(set = 0, binding = 2) uniform sampler2D u_Texture;
 
 void main() 
 {
-    outColor = vec4(fragColor, 1.0);
-    outColor.rg = v_TexCoord;
-    outColor.b = 0.0;
-
     vec4 texColor = texture(u_Texture, v_TexCoord);
 
     outColor = texColor;
+    outColor = vec4(1.0f, 1.0f, 1.0f, 1.0f);
 }

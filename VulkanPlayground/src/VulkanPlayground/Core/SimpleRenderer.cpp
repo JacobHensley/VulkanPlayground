@@ -5,14 +5,14 @@
 #include "VulkanPlayground/Graphics/VulkanDevice.h"
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include <vulkan/vulkan.h>
-
-#include "tinygltf/tiny_gltf.h"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace VKPlayground {
 
-	struct ColorBuffer
+	struct CameraBuffer
 	{
-		glm::vec3 Color;
+		glm::mat4 View;
+		glm::mat4 Proj;
 	};
 
 	static SimpleRenderer* s_Instance = nullptr;
@@ -39,6 +39,7 @@ namespace VKPlayground {
 	{
 		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
 
+		m_Camera = CreateRef<Camera>(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 100.0f));
 		m_Shader = CreateRef<Shader>("assets/shaders/test.shader");
 		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader, swapChain->GetRenderPass());
 
@@ -61,18 +62,20 @@ namespace VKPlayground {
 		// Create index buffer
 		uint16_t indices[6] = { 0, 1, 2, 2, 3, 0 };
 
-		m_IndexBuffer = CreateRef<VulkanIndexBuffer>(&indices, sizeof(indices));
+		m_IndexBuffer = CreateRef<VulkanIndexBuffer>(&indices, sizeof(indices), 6);
 
 		// Create uniform buffer
-		ColorBuffer colorBuffer;
-		colorBuffer.Color = glm::vec3(1.0f, 0.3f, 0.3f);
+		CameraBuffer cameraBuffer;
+		cameraBuffer.View = m_Camera->GetViewMatrix();
+		cameraBuffer.Proj = m_Camera->GetProjectionMatrix();
 
-		m_UniformBuffer = CreateRef<VulkanUniformBuffer>(&colorBuffer, sizeof(colorBuffer));
+		m_UniformBuffer = CreateRef<VulkanUniformBuffer>(&cameraBuffer, sizeof(cameraBuffer));
 
 		CreateDescriptorPools();
 
 		// Resources
 		m_Texture = CreateRef<Texture2D>("assets/textures/ChernoLogo.png");
+		m_Mesh = CreateRef<Mesh>("assets/models/Cube.gltf");
 	}
 
 	void SimpleRenderer::CreateDescriptorPools()
@@ -109,6 +112,16 @@ namespace VKPlayground {
 		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
 		VkDevice device = Application::GetApp().GetVulkanDevice()->GetLogicalDevice();
 		uint32_t frameIndex = swapChain->GetCurrentBufferIndex();
+
+		m_Camera->Update();
+
+		// Create uniform buffer
+		CameraBuffer cameraBuffer;
+		cameraBuffer.View = m_Camera->GetViewMatrix();
+		cameraBuffer.Proj = m_Camera->GetProjectionMatrix();
+
+		// Create function to update buffer instead of creating the object again
+		m_UniformBuffer = CreateRef<VulkanUniformBuffer>(&cameraBuffer, sizeof(cameraBuffer));
 
 		// Reset descriptor pool for current frame about to begin
 		VK_CHECK_RESULT(vkResetDescriptorPool(device, m_DescriptorPools[frameIndex], 0));
@@ -214,12 +227,12 @@ namespace VKPlayground {
 		vkCmdBindPipeline(m_ActiveCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipeline());
 
 		VkDeviceSize offset = 0;
-		VkBuffer vertexBuffer = m_VertexBuffer->GetVulkanBuffer();
+		VkBuffer vertexBuffer = m_Mesh->GetVertexBuffer()->GetVulkanBuffer();
 		vkCmdBindVertexBuffers(m_ActiveCommandBuffer, 0, 1, &vertexBuffer, &offset);
-		vkCmdBindIndexBuffer(m_ActiveCommandBuffer, m_IndexBuffer->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(m_ActiveCommandBuffer, m_Mesh->GetIndexBuffer()->GetVulkanBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
 		vkCmdBindDescriptorSets(m_ActiveCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_Pipeline->GetPipelineLayout(), 0, 1, m_DescriptorSets.data(), 0, nullptr);
-		vkCmdDrawIndexed(m_ActiveCommandBuffer, 6, 1, 0, 0, 0);
+		vkCmdDrawIndexed(m_ActiveCommandBuffer, m_Mesh->GetIndexBuffer()->GetCount(), 1, 0, 0, 0);
 	}
 
 	void SimpleRenderer::RenderUI()

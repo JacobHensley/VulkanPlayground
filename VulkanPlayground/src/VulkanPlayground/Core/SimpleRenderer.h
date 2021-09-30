@@ -4,7 +4,8 @@
 #include "VulkanPlayground/Graphics/VulkanBuffers.h"
 #include "VulkanPlayground/Graphics/ImGUI/ImGUILayer.h"
 #include "VulkanPlayground/Graphics/Texture.h"
-#include "VulkanPlayground/Graphics/VulkanFramebuffer.h"
+#include "VulkanPlayground/Graphics/Mesh.h"
+#include "VulkanPlayground/Graphics/Camera.h"
 
 namespace VKPlayground  {
 
@@ -41,8 +42,10 @@ namespace VKPlayground  {
 		Ref<VulkanIndexBuffer> m_IndexBuffer;
 		Ref<VulkanUniformBuffer> m_UniformBuffer;
 		
+		Ref<Camera> m_Camera;
+
 		Ref<Texture2D> m_Texture;
-		Ref<VulkanFramebuffer> m_Framebuffer;
+		Ref<Mesh> m_Mesh;
 
 		VkCommandBuffer m_ActiveCommandBuffer = nullptr;
 

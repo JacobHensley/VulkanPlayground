@@ -28,14 +28,16 @@ namespace VKPlayground {
 	class VulkanIndexBuffer
 	{
 	public:
-		VulkanIndexBuffer(void* indexData, uint32_t size);
+		VulkanIndexBuffer(void* indexData, uint32_t size, uint32_t count);
 		~VulkanIndexBuffer();
 
 	public:
 		VkBuffer GetVulkanBuffer() { return m_BufferInfo.Buffer; }
+		uint32_t GetCount() { return m_Count; }
 
 	private:
 		BufferInfo m_BufferInfo;
+		uint32_t m_Count = 0;
 	};
 
 	// Uniform Buffer

@@ -48,6 +48,7 @@
 #include "pch.h"
 #include "imgui.h"
 #include "impl_vulkan_with_textures.h"
+#include <glm/glm.hpp>
 #include <stdio.h>
 
 #include "VulkanPlayground/Core/SimpleRenderer.h"

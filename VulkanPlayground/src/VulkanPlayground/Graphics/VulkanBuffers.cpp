@@ -28,7 +28,8 @@ namespace VKPlayground {
 		allocator.DestroyBuffer(m_BufferInfo.Buffer, m_BufferInfo.Allocation);
 	}
 
-	VulkanIndexBuffer::VulkanIndexBuffer(void* indexData, uint32_t size)
+	VulkanIndexBuffer::VulkanIndexBuffer(void* indexData, uint32_t size, uint32_t count)
+		: m_Count(count) 
 	{
 		// Create buffer info
 		VkBufferCreateInfo vertexBufferCreateInfo = {};
