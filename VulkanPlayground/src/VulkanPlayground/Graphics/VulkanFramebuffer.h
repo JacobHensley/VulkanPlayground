@@ -36,6 +36,10 @@ namespace VKPlayground {
 		inline uint32_t GetWidth() { return m_Width; }
 		inline uint32_t GetHeight() { return m_Height; }
 
+		inline const FramebufferSpecification& GetSpecification() const { return m_Specification; }
+
+		Ref<VulkanImage> GetImage(uint32_t index) { return m_Attachments[index].Image; }
+
 	private:
 		void Init();
 

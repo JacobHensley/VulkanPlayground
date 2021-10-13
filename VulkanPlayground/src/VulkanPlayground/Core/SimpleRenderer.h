@@ -6,6 +6,7 @@
 #include "VulkanPlayground/Graphics/Texture.h"
 #include "VulkanPlayground/Graphics/Mesh.h"
 #include "VulkanPlayground/Graphics/Camera.h"
+#include "VulkanPlayground/Graphics/VulkanFramebuffer.h"
 
 namespace VKPlayground  {
 
@@ -19,7 +20,7 @@ namespace VKPlayground  {
 		void BeginFrame();
 		void EndFrame();
 
-		void BeginRenderPass();
+		void BeginRenderPass(Ref<VulkanFramebuffer> framebuffer = nullptr);
 		void EndRenderPass();
 
 		void Render();
@@ -27,8 +28,9 @@ namespace VKPlayground  {
 
 		void OnImGuiRender();
 
-		static VkDescriptorSet AllocateDescriptorSet(VkDescriptorSetAllocateInfo allocInfo);
+		Ref<VulkanFramebuffer> GetFramebuffer() { return m_Framebuffer; }
 
+		static VkDescriptorSet AllocateDescriptorSet(VkDescriptorSetAllocateInfo allocInfo);
 	private:
 		void Init();
 		void CreateDescriptorPools();
@@ -42,6 +44,8 @@ namespace VKPlayground  {
 		Ref<VulkanIndexBuffer> m_IndexBuffer;
 		Ref<VulkanUniformBuffer> m_UniformBuffer;
 		
+		Ref<VulkanFramebuffer> m_Framebuffer;
+
 		Ref<Camera> m_Camera;
 
 		Ref<Texture2D> m_Texture;

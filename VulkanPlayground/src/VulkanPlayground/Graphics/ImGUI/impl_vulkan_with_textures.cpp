@@ -381,10 +381,10 @@ void ImGui_ImplVulkan_RenderDrawData(ImDrawData* draw_data, VkCommandBuffer comm
         VkMappedMemoryRange range[2] = {};
         range[0].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         range[0].memory = rb->VertexBufferMemory;
-        range[0].size = VK_WHOLE_SIZE;
+        range[0].size = vertex_size;
         range[1].sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
         range[1].memory = rb->IndexBufferMemory;
-        range[1].size = VK_WHOLE_SIZE;
+        range[1].size = index_size;
         err = vkFlushMappedMemoryRanges(v->Device, 2, range);
         check_vk_result(err);
         vkUnmapMemory(v->Device, rb->VertexBufferMemory);

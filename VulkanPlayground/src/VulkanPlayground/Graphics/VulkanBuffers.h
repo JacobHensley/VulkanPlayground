@@ -49,11 +49,14 @@ namespace VKPlayground {
 
 	public:
 		VkBuffer GetVulkanBuffer() { return m_BufferInfo.Buffer; }
+
+		void UpdateBuffer(void* data);
 		const VkDescriptorBufferInfo& getDescriptorBufferInfo() { return m_DescriptorBufferInfo; }
 
 	private:
 		BufferInfo m_BufferInfo;
 		VkDescriptorBufferInfo m_DescriptorBufferInfo;
+		uint32_t m_Size = 0;
 	};
 
 	// Vulkan Buffer

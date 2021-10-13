@@ -49,7 +49,7 @@ namespace VKPlayground {
 
 		// Vertex 0: TextureCoords
 		vertexInputAttributes[3].binding = 0;
-		vertexInputAttributes[3].location = 2;
+		vertexInputAttributes[3].location = 3;
 		vertexInputAttributes[3].format = VK_FORMAT_R32G32_SFLOAT;
 		vertexInputAttributes[3].offset = 36;
 
@@ -173,6 +173,18 @@ namespace VKPlayground {
 	//	VkRenderPass renderPass = swapChain->GetRenderPass();
 		VkRenderPass renderPass = m_RenderPass;
 
+		VkPipelineDepthStencilStateCreateInfo depthStencilState = {};
+		depthStencilState.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencilState.depthTestEnable = VK_TRUE;
+		depthStencilState.depthWriteEnable = VK_TRUE;
+		depthStencilState.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+		depthStencilState.depthBoundsTestEnable = VK_FALSE;
+		depthStencilState.back.failOp = VK_STENCIL_OP_KEEP;
+		depthStencilState.back.passOp = VK_STENCIL_OP_KEEP;
+		depthStencilState.back.compareOp = VK_COMPARE_OP_ALWAYS;
+		depthStencilState.stencilTestEnable = VK_FALSE;
+		depthStencilState.front = depthStencilState.back;
+
 		// Create pipeline
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
 		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -183,7 +195,7 @@ namespace VKPlayground {
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &rasterizer;
 		pipelineInfo.pMultisampleState = &multisampling;
-		pipelineInfo.pDepthStencilState = nullptr;         // Optional
+		pipelineInfo.pDepthStencilState = &depthStencilState;
 		pipelineInfo.pColorBlendState = &colorBlending;
 		pipelineInfo.pDynamicState = &dynamicState;
 		pipelineInfo.layout = m_PipelineLayout;

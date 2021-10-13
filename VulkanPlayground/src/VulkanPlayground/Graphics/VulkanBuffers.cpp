@@ -54,6 +54,7 @@ namespace VKPlayground {
 	}
 
 	VulkanUniformBuffer::VulkanUniformBuffer(void* data, uint32_t size)
+		: m_Size(size)
 	{
 		// Create buffer info
 		VkBufferCreateInfo vertexBufferCreateInfo = {};
@@ -65,10 +66,7 @@ namespace VKPlayground {
 		VulkanAllocator allocator("UniformBuffer");
 		m_BufferInfo.Allocation = allocator.AllocateBuffer(vertexBufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, m_BufferInfo.Buffer);
 
-		// Copy data into buffer
-		void* dstBuffer = allocator.MapMemory<void>(m_BufferInfo.Allocation);
-		memcpy(dstBuffer, data, size);
-		allocator.UnmapMemory(m_BufferInfo.Allocation);
+		UpdateBuffer(data);
 
 		m_DescriptorBufferInfo.buffer = m_BufferInfo.Buffer;
 		m_DescriptorBufferInfo.offset = 0;
@@ -79,6 +77,15 @@ namespace VKPlayground {
 	{
 		VulkanAllocator allocator("UniformBuffer");
 		allocator.DestroyBuffer(m_BufferInfo.Buffer, m_BufferInfo.Allocation);
+	}
+
+	void VulkanUniformBuffer::UpdateBuffer(void* data)
+	{
+		// Copy data into buffer
+		VulkanAllocator allocator("UniformBuffer");
+		void* dstBuffer = allocator.MapMemory<void>(m_BufferInfo.Allocation);
+		memcpy(dstBuffer, data, m_Size);
+		allocator.UnmapMemory(m_BufferInfo.Allocation);
 	}
 
 	VulkanBuffer::VulkanBuffer(void* data, uint32_t size, VkBufferUsageFlagBits bufferType, VmaMemoryUsage memoryType)

@@ -41,7 +41,6 @@ namespace VKPlayground {
 
 		m_Camera = CreateRef<Camera>(glm::perspectiveFov(glm::radians(45.0f), 1280.0f, 720.0f, 0.1f, 100.0f));
 		m_Shader = CreateRef<Shader>("assets/shaders/test.shader");
-		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader, swapChain->GetRenderPass());
 
 		// Create vertex buffer
 		struct Vertex
@@ -76,6 +75,14 @@ namespace VKPlayground {
 		// Resources
 		m_Texture = CreateRef<Texture2D>("assets/textures/ChernoLogo.png");
 		m_Mesh = CreateRef<Mesh>("assets/models/Cube.gltf");
+
+		FramebufferSpecification spec;
+		spec.AttachmentFormats = { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_D24_UNORM_S8_UINT };
+		spec.Width = 1280;
+		spec.Height = 720;
+		m_Framebuffer = CreateRef<VulkanFramebuffer>(spec);
+
+		m_Pipeline = CreateRef<VulkanPipeline>(m_Shader, m_Framebuffer->GetRenderPass());
 	}
 
 	void SimpleRenderer::CreateDescriptorPools()
@@ -117,11 +124,12 @@ namespace VKPlayground {
 
 		// Create uniform buffer
 		CameraBuffer cameraBuffer;
-		cameraBuffer.View = m_Camera->GetViewMatrix();
+		cameraBuffer.View = m_Camera->GetViewMatrix() * glm::scale(glm::mat4(1.0f), glm::vec3(5.0));
 		cameraBuffer.Proj = m_Camera->GetProjectionMatrix();
 
 		// Create function to update buffer instead of creating the object again
-		m_UniformBuffer = CreateRef<VulkanUniformBuffer>(&cameraBuffer, sizeof(cameraBuffer));
+		m_UniformBuffer->UpdateBuffer(&cameraBuffer);
+	//	m_UniformBuffer = CreateRef<VulkanUniformBuffer>(&cameraBuffer, sizeof(cameraBuffer));
 
 		// Reset descriptor pool for current frame about to begin
 		VK_CHECK_RESULT(vkResetDescriptorPool(device, m_DescriptorPools[frameIndex], 0));
@@ -175,9 +183,27 @@ namespace VKPlayground {
 		VK_CHECK_RESULT(vkEndCommandBuffer(m_ActiveCommandBuffer));
 	}
 
-	void SimpleRenderer::BeginRenderPass()
+	void SimpleRenderer::BeginRenderPass(Ref<VulkanFramebuffer> framebuffer)
 	{
-		Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+		VkRenderPass renderPass;
+		VkFramebuffer vulkanFramebuffer;
+		VkExtent2D extent;
+
+		if (framebuffer)
+		{
+			vulkanFramebuffer = framebuffer->GetFramebuffer();
+			renderPass = framebuffer->GetRenderPass();
+			extent = { framebuffer->GetWidth(), framebuffer->GetHeight() };
+		}
+		else
+		{
+			// Use swapchain if no framebuffer
+			Ref<VulkanSwapChain> swapChain = Application::GetApp().GetVulkanSwapChain();
+			vulkanFramebuffer = swapChain->GetCurrentFramebuffer();
+			renderPass = swapChain->GetRenderPass();
+			extent = swapChain->GetExtent();
+		}
+
 
 		// Set clear color
 		static float r = 0.0f;
@@ -195,19 +221,30 @@ namespace VKPlayground {
 		// Begin render pass
 		VkRenderPassBeginInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		renderPassInfo.renderPass = swapChain->GetRenderPass();
-		renderPassInfo.framebuffer = swapChain->GetCurrentFramebuffer();
+		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.framebuffer = vulkanFramebuffer;
 		renderPassInfo.renderArea.offset = { 0, 0 };
-		renderPassInfo.renderArea.extent = swapChain->GetExtent();
+		renderPassInfo.renderArea.extent = extent;
+
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = clearColor;
+		if (framebuffer)
+		{
+			renderPassInfo.clearValueCount = 2;
+
+		}
 
 		// Update viewport
 		VkViewport viewport{};
 		viewport.x = 0.0f;
-		viewport.y = (float)swapChain->GetExtent().height;
-		viewport.width = (float)swapChain->GetExtent().width;
-		viewport.height = -(float)swapChain->GetExtent().height;
+		viewport.y = 0.0f;
+		viewport.width = (float)extent.width;
+		viewport.height = (float)extent.height;
+		if (!framebuffer)
+		{
+			viewport.y = (float)extent.height;
+			viewport.height = -(float)extent.height;
+		}
 		viewport.minDepth = 0.0f;
 		viewport.maxDepth = 1.0f;
 		vkCmdSetViewport(m_ActiveCommandBuffer, 0, 1, &viewport);
@@ -242,13 +279,28 @@ namespace VKPlayground {
 
 	void SimpleRenderer::OnImGuiRender()
 	{
-		ImGui::Begin("Example");
-		ImGui::Button("Hello");
+	//	ImGui::Begin("Example");
+	//	ImGui::Button("Hello");
 
-		auto& descriptorInfo = m_Texture->GetDescriptorImageInfo();
-		ImTextureID imTex = ImGui_ImplVulkan_AddTexture(descriptorInfo.sampler, descriptorInfo.imageView, descriptorInfo.imageLayout);
-		ImGui::Image(imTex, { 512, 512 }, ImVec2(0, 1), ImVec2(1, 0));
-		ImGui::End();
+	//	auto& descriptorInfo = m_Texture->GetDescriptorImageInfo();
+	//	ImTextureID imTex = ImGui_ImplVulkan_AddTexture(descriptorInfo.sampler, descriptorInfo.imageView, descriptorInfo.imageLayout);
+	//	ImGui::Image(imTex, { 512, 512 }, ImVec2(0, 1), ImVec2(1, 0));
+	//	ImGui::End();
+
+		// Viewport
+		{
+			ImGui::Begin("Viewport");
+
+			auto& descriptorInfo = m_Framebuffer->GetImage(0)->GetDescriptorImageInfo();
+			ImTextureID imTex = ImGui_ImplVulkan_AddTexture(descriptorInfo.sampler, descriptorInfo.imageView, descriptorInfo.imageLayout);
+
+			const auto& fbSpec = m_Framebuffer->GetSpecification();
+			float width = ImGui::GetContentRegionAvail().x;
+			float aspect = (float)fbSpec.Height / (float)fbSpec.Width;
+
+			ImGui::Image(imTex, { width, width * aspect }, ImVec2(0, 1), ImVec2(1, 0));
+			ImGui::End();
+		}
 	}
 
 	std::vector<VkDescriptorSet> SimpleRenderer::AllocateDescriptorSets(const std::vector<VkDescriptorSetLayout>& layouts)

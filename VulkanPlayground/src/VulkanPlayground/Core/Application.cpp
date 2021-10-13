@@ -65,12 +65,15 @@ namespace VKPlayground {
 
 			// OnRenderFunction
 			{
-				m_Renderer->BeginRenderPass();
+				m_Renderer->BeginRenderPass(m_Renderer->GetFramebuffer());
 
 				// Render
 				m_Renderer->Render();
-				m_Renderer->RenderUI();
 
+				m_Renderer->EndRenderPass();
+
+				m_Renderer->BeginRenderPass();
+				m_Renderer->RenderUI();
 				m_Renderer->EndRenderPass();
 			}
 

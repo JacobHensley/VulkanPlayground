@@ -50,58 +50,61 @@ namespace VKPlayground {
 		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
 		VkCommandBuffer commandBuffer = device->CreateCommandBuffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
-		VkImageAspectFlags aspectFlag = IsDepthFormat(m_Specification.Format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
+		VkImageAspectFlags aspectFlag = IsDepthFormat(m_Specification.Format) ? (VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT) : VK_IMAGE_ASPECT_COLOR_BIT;
 
-		// Range of image to copy (only the first mip)
-		VkImageSubresourceRange range;
-		range.aspectMask = aspectFlag;
-		range.baseMipLevel = 0;
-		range.levelCount = 1;
-		range.baseArrayLayer = 0;
-		range.layerCount = m_Specification.LayerCount;
+		if (m_Specification.Data)
+		{
+			// Range of image to copy (only the first mip)
+			VkImageSubresourceRange range;
+			range.aspectMask = aspectFlag;
+			range.baseMipLevel = 0;
+			range.levelCount = 1;
+			range.baseArrayLayer = 0;
+			range.layerCount = m_Specification.LayerCount;
 
-		// Transfer image from undefined layout to destination optimal for copying into
-		InsertImageMemoryBarrier(
-			commandBuffer,
-			m_ImageInfo.Image,
-			0,
-			VK_ACCESS_TRANSFER_WRITE_BIT,
-			VK_IMAGE_LAYOUT_UNDEFINED,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-			VK_PIPELINE_STAGE_TRANSFER_BIT,
-			range);
+			// Transfer image from undefined layout to destination optimal for copying into
+			InsertImageMemoryBarrier(
+				commandBuffer,
+				m_ImageInfo.Image,
+				0,
+				VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_IMAGE_LAYOUT_UNDEFINED,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				range);
 
-		// Define what part of the image to copy
-		VkBufferImageCopy copyRegion = {};
-		copyRegion.bufferOffset = 0;
-		copyRegion.bufferRowLength = 0;
-		copyRegion.bufferImageHeight = 0;
-		copyRegion.imageSubresource.aspectMask = aspectFlag;
-		copyRegion.imageSubresource.mipLevel = 0;
-		copyRegion.imageSubresource.baseArrayLayer = 0;
-		copyRegion.imageSubresource.layerCount = m_Specification.LayerCount;
-		copyRegion.imageExtent.width = m_Specification.Width;
-		copyRegion.imageExtent.height = m_Specification.Height;
-		copyRegion.imageExtent.depth = 1;
+			// Define what part of the image to copy
+			VkBufferImageCopy copyRegion = {};
+			copyRegion.bufferOffset = 0;
+			copyRegion.bufferRowLength = 0;
+			copyRegion.bufferImageHeight = 0;
+			copyRegion.imageSubresource.aspectMask = aspectFlag;
+			copyRegion.imageSubresource.mipLevel = 0;
+			copyRegion.imageSubresource.baseArrayLayer = 0;
+			copyRegion.imageSubresource.layerCount = m_Specification.LayerCount;
+			copyRegion.imageExtent.width = m_Specification.Width;
+			copyRegion.imageExtent.height = m_Specification.Height;
+			copyRegion.imageExtent.depth = 1;
 
-		// Copy CPU-GPU buffer into GPU-ONLY texture
-		vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.GetVulkanBuffer(), m_ImageInfo.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
+			// Copy CPU-GPU buffer into GPU-ONLY texture
+			vkCmdCopyBufferToImage(commandBuffer, stagingBuffer.GetVulkanBuffer(), m_ImageInfo.Image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyRegion);
 
-		// Transfer image from destination optimal layout to shader read optimal
-		InsertImageMemoryBarrier(
-			commandBuffer,
-			m_ImageInfo.Image,
-			VK_ACCESS_TRANSFER_WRITE_BIT,
-			VK_ACCESS_SHADER_READ_BIT,
-			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-			VK_PIPELINE_STAGE_TRANSFER_BIT,
-			VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			range);
+			// Transfer image from destination optimal layout to shader read optimal
+			InsertImageMemoryBarrier(
+				commandBuffer,
+				m_ImageInfo.Image,
+				VK_ACCESS_TRANSFER_WRITE_BIT,
+				VK_ACCESS_SHADER_READ_BIT,
+				VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+				VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+				VK_PIPELINE_STAGE_TRANSFER_BIT,
+				VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+				range);
 
-		// Submit and free command buffer
-		device->FlushCommandBuffer(commandBuffer, true);
+			// Submit and free command buffer
+			device->FlushCommandBuffer(commandBuffer, true);
+		}
 
 		// Create image view
 		VkImageViewCreateInfo imageViewCreateInfo = {};
