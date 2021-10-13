@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "SimpleRenderer.h"
 #include "Application.h"
-#include "VulkanPlayground/Graphics/ImGUI/impl_vulkan_with_textures.h"
+#include "VulkanPlayground/Graphics/ImGUI/imgui_impl_vulkan_with_textures.h"
 #include "VulkanPlayground/Graphics/VulkanDevice.h"
 #include "VulkanPlayground/Core/VulkanTools.h"
 #include <vulkan/vulkan.h>

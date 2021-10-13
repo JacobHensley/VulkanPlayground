@@ -42,6 +42,6 @@ void main()
     vec4 texColor = texture(u_Texture, v_TexCoord);
 
     outColor = texColor;
-    outColor.rgb = v_Normal;// *0.5 + 0.5;
+    outColor.rgb = v_Normal * 0.5 + 0.5;
     outColor.a = 1.0;
 }

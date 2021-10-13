@@ -77,6 +77,7 @@ namespace VKPlayground {
 						m_Vertices[subMeshVertexOffset + j].Normal.x = normals[j * 3 + 0];
 						m_Vertices[subMeshVertexOffset + j].Normal.y = normals[j * 3 + 1];
 						m_Vertices[subMeshVertexOffset + j].Normal.z = normals[j * 3 + 2];
+						LOG_DEBUG("Normal: X: {0}, Y: {1}, Z: {2}", m_Vertices[subMeshVertexOffset + j].Normal.x, m_Vertices[subMeshVertexOffset + j].Normal.y, m_Vertices[subMeshVertexOffset + j].Normal.z);
 					}
 				}
 

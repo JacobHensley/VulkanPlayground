@@ -38,13 +38,13 @@ namespace VKPlayground {
 		// Vertex 0: Normal
 		vertexInputAttributes[1].binding = 0;
 		vertexInputAttributes[1].location = 1;
-		vertexInputAttributes[1].format = VK_FORMAT_R32G32_SFLOAT;
+		vertexInputAttributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
 		vertexInputAttributes[1].offset = 12;
 
 		// Vertex 0: Tangent
 		vertexInputAttributes[2].binding = 0;
 		vertexInputAttributes[2].location = 2;
-		vertexInputAttributes[2].format = VK_FORMAT_R32G32_SFLOAT;
+		vertexInputAttributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
 		vertexInputAttributes[2].offset = 24;
 
 		// Vertex 0: TextureCoords
