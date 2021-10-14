@@ -154,7 +154,7 @@ namespace VKPlayground {
 		//Set push constants
 		VkPushConstantRange pushConstantRange;
 		pushConstantRange.offset = 0;
-		pushConstantRange.size = 128; // TODO: Get this info from device
+		pushConstantRange.size = 128;
 		pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
 		// Set pipeline layout

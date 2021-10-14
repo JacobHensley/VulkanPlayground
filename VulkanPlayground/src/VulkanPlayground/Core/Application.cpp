@@ -16,6 +16,11 @@ namespace VKPlayground {
 
 	Application::~Application()
 	{
+		for (auto& layer : m_Layers)
+		{
+			layer.reset();
+		}
+
 		m_Renderer.reset();
 		m_ImGUILayer.reset();
 		m_SwapChain.reset();
@@ -42,9 +47,38 @@ namespace VKPlayground {
 
 		VulkanAllocator::Init(m_Device);
 
-		m_Renderer = CreateRef<SimpleRenderer>();
-
+		m_Renderer = CreateRef<Renderer>();
+		
 		m_ImGUILayer = CreateRef<ImGUILayer>();
+	}
+
+	void Application::Update()
+	{
+		for (auto& layer : m_Layers)
+		{
+			layer->Update();
+		}
+	}
+
+	void Application::Render()
+	{
+		for (auto& layer : m_Layers)
+		{
+			layer->Render();
+		}
+	}
+
+	void Application::ImGUIRender()
+	{
+		m_ImGUILayer->BeginFrame();
+
+		m_Renderer->OnImGuiRender();
+		for (auto& layer : m_Layers)
+		{
+			layer->ImGUIRender();
+		}
+
+		m_ImGUILayer->EndFrame();
 	}
 
 	void Application::Run()
@@ -52,37 +86,19 @@ namespace VKPlayground {
 		while (!m_Window->IsClosed())
 		{	
 			m_Window->Update();
+
 			m_SwapChain->BeginFrame();
 			m_Renderer->BeginFrame();
-
-			// OnUpdate function
-			{
-				// ImGui
-				m_ImGUILayer->BeginFrame();
-				m_Renderer->OnImGuiRender();
-				m_ImGUILayer->EndFrame();
-			}
-
-			// OnRenderFunction
-			{
-				m_Renderer->BeginRenderPass(m_Renderer->GetFramebuffer());
-
-				// Render
-				m_Renderer->Render();
-
-				m_Renderer->EndRenderPass();
-
-				m_Renderer->BeginRenderPass();
-				m_Renderer->RenderUI();
-				m_Renderer->EndRenderPass();
-			}
+			
+			Update();
+			ImGUIRender();
+			Render();
 
 			m_Renderer->EndFrame();
 			m_SwapChain->Present();
 		}
 
-		Ref<VulkanDevice> device = Application::GetApp().GetVulkanDevice();
-		vkDeviceWaitIdle(device->GetLogicalDevice());
+		vkDeviceWaitIdle(m_Device->GetLogicalDevice());
 	}
 
 }

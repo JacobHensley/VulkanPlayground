@@ -66,7 +66,8 @@ namespace VKPlayground {
 		VulkanAllocator allocator("UniformBuffer");
 		m_BufferInfo.Allocation = allocator.AllocateBuffer(vertexBufferCreateInfo, VMA_MEMORY_USAGE_CPU_TO_GPU, m_BufferInfo.Buffer);
 
-		UpdateBuffer(data);
+		if (data)
+			UpdateBuffer(data);
 
 		m_DescriptorBufferInfo.buffer = m_BufferInfo.Buffer;
 		m_DescriptorBufferInfo.offset = 0;

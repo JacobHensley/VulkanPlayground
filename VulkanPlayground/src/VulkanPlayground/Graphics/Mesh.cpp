@@ -12,7 +12,6 @@ namespace VKPlayground {
 
 	Mesh::~Mesh()
 	{
-
 	}
 
 	void Mesh::Init()
@@ -44,7 +43,8 @@ namespace VKPlayground {
 		for (tinygltf::Mesh mesh : m_Model.meshes)
 		{
 			uint32_t vertexCount = m_Model.accessors[0].count;
-			
+			int subMeshIndexCount = 0;
+
 			for (int i = 0; i < mesh.primitives.size(); i++)
 			{
 				if (m_Vertices.size() < vertexCount * meshIndex)
@@ -77,7 +77,6 @@ namespace VKPlayground {
 						m_Vertices[subMeshVertexOffset + j].Normal.x = normals[j * 3 + 0];
 						m_Vertices[subMeshVertexOffset + j].Normal.y = normals[j * 3 + 1];
 						m_Vertices[subMeshVertexOffset + j].Normal.z = normals[j * 3 + 2];
-						LOG_DEBUG("Normal: X: {0}, Y: {1}, Z: {2}", m_Vertices[subMeshVertexOffset + j].Normal.x, m_Vertices[subMeshVertexOffset + j].Normal.y, m_Vertices[subMeshVertexOffset + j].Normal.z);
 					}
 				}
 
@@ -126,6 +125,7 @@ namespace VKPlayground {
 					}
 
 					indexCount += accessor.count;
+					subMeshIndexCount = accessor.count;
 				}
 
 				meshIndex++;
@@ -134,7 +134,11 @@ namespace VKPlayground {
 			SubMesh& subMesh = m_SubMeshes.emplace_back();
 
 			subMesh.VertexOffset = subMeshVertexOffset;
+			subMesh.IndexOffset = subMeshIndexOffset;
+			subMesh.IndexCount = subMeshIndexCount;
+
 			subMeshVertexOffset += vertexCount;
+			subMeshIndexOffset += indexCount;
 		}
 
 	}

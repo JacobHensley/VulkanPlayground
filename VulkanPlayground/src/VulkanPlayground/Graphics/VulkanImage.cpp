@@ -25,7 +25,6 @@ namespace VKPlayground {
 		// TODO: Obtain BPP from image format
 		uint32_t size = m_Specification.Width * m_Specification.Height * 4;
 
-		// TODO: Ask Yan about usage
 		// Image create info
 		VkImageCreateInfo imageCreateInfo = {};
 		imageCreateInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

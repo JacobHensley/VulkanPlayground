@@ -55,7 +55,7 @@
 
 #include "pch.h"
 #include "imgui_impl_vulkan_with_textures.h"
-#include "VulkanPlayground/Core/SimpleRenderer.h"
+#include "VulkanPlayground/Graphics/Renderer.h"
 #include <stdio.h>
 
 // Reusable buffers used for rendering 1 current in-flight frame, for ImGui_ImplVulkan_RenderDrawData()
@@ -1425,7 +1425,7 @@ ImTextureID ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_vie
     alloc_info.descriptorSetCount = 1;
     alloc_info.pSetLayouts = &bd->DescriptorSetLayout;
 
-    VkDescriptorSet descriptor_set = VKPlayground::SimpleRenderer::AllocateDescriptorSet(alloc_info);
+    VkDescriptorSet descriptor_set = VKPlayground::Renderer::AllocateDescriptorSet(alloc_info);
     ImGui_ImplVulkan_UpdateTextureInfo(descriptor_set, sampler, image_view, image_layout);
     return (ImTextureID)descriptor_set;
 }

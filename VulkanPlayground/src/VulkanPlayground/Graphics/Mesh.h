@@ -8,6 +8,8 @@ namespace VKPlayground {
 	struct SubMesh
 	{
 		uint32_t VertexOffset = 0;
+		uint32_t IndexOffset = 0;
+		uint32_t IndexCount = 0;
 	};
 
 	struct Vertex
@@ -23,6 +25,8 @@ namespace VKPlayground {
 	public:
 		Mesh(const std::string& path);
 		~Mesh();
+
+		inline const std::vector<SubMesh>& GetSubMeshes() const { return m_SubMeshes; }
 
 		inline Ref<VulkanVertexBuffer> GetVertexBuffer() const { return m_VertexBuffer; }
 		inline Ref<VulkanIndexBuffer> GetIndexBuffer() const { return m_IndexBuffer; }
